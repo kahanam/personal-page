@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spin the Wheel · Aaron Kahan</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; script-src 'self';">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="spin-the-wheel.css">
+</head>
+<body>
+  <div class="container">
+    <div class="experiment-header">
+      <a href="../" class="back-link">&larr; back</a>
+      <h1 class="experiment-title">Spin the Wheel</h1>
+    </div>
+
+    <div class="wheel-layout">
+      <div class="wheel-section">
+        <div class="wheel-container">
+          <div class="pointer"></div>
+          <canvas id="wheel" width="350" height="350"></canvas>
+        </div>
+        <button id="spin-btn" disabled>Spin!</button>
+        <p id="result"></p>
+      </div>
+      <div class="options-section">
+        <h3>Options</h3>
+        <form id="option-form">
+          <label for="option-input" class="sr-only">Add an option</label>
+          <input type="text" id="option-input" placeholder="Add an option..." autocomplete="off">
+          <button type="submit">Add</button>
+        </form>
+        <ul id="option-list"></ul>
+      </div>
+    </div>
+
+    <p class="experiment-desc experiment-desc-spaced">
+      Add at least two options, then spin to let the wheel decide.
+    </p>
+  </div>
+
+  <script src="spin-the-wheel.js"></script>
+</body>
+</html>
