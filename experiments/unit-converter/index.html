@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unit Converter · Aaron Kahan</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; script-src 'self';">
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="stylesheet" href="unit-converter.css">
+</head>
+<body>
+  <div class="container">
+    <div class="experiment-header">
+      <a href="../../" class="back-link">&larr; back</a>
+      <h1 class="experiment-title">Unit Converter</h1>
+    </div>
+
+    <div class="converter-layout">
+      <div class="category-tabs" id="category-tabs"></div>
+
+      <div class="converter-card">
+        <div class="converter-row">
+          <div class="input-group">
+            <label for="from-value">From</label>
+            <input type="number" id="from-value" autocomplete="off" placeholder="Enter value...">
+            <select id="from-unit"></select>
+          </div>
+          <div class="swap-btn-wrapper">
+            <button id="swap-btn" title="Swap units">&#8646;</button>
+          </div>
+          <div class="input-group">
+            <label for="to-value">To</label>
+            <input type="number" id="to-value" readonly>
+            <select id="to-unit"></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="experiment-desc experiment-desc-spaced">
+      Convert between common units of length, weight, and temperature.
+    </p>
+  </div>
+
+  <script src="unit-converter.js"></script>
+</body>
+</html>

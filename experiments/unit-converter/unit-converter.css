@@ -1,0 +1,133 @@
+.converter-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.category-tabs {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.category-tab {
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text);
+  background: none;
+  border: 1px solid var(--border);
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.category-tab:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.category-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.converter-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  width: 100%;
+}
+
+.converter-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.input-group {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.input-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.input-group input,
+.input-group select {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  border-color: var(--accent);
+}
+
+#to-value {
+  color: var(--text-dim);
+}
+
+.swap-btn-wrapper {
+  display: flex;
+  align-items: center;
+  padding-bottom: 0.15rem;
+}
+
+#swap-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--accent);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+
+#swap-btn:hover {
+  border-color: var(--accent);
+  background: rgba(124, 140, 245, 0.08);
+}
+
+.experiment-desc-spaced {
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 560px) {
+  .converter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .swap-btn-wrapper {
+    justify-content: center;
+    padding-bottom: 0;
+  }
+}

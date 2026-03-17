@@ -14,7 +14,7 @@ Open `index.html` directly in a browser or serve with any static file server (e.
 
 - `index.html` — landing page; links to experiments and external sites
 - `style.css` — global styles shared by all pages (design tokens in `:root` CSS variables, dark theme)
-- `experiments/` — each experiment is a standalone page (`<name>.html`) with optional per-experiment `.js` and `.css` files; experiment pages import `../style.css` for shared styling and add their own assets
+- `experiments/<name>/` — each experiment lives in its own folder with an `index.html`, plus optional `.js` and `.css` files; experiment pages import `../../style.css` for shared styling and add their own assets
 
 ## Conventions
 
