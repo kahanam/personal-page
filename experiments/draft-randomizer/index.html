@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Draft Randomizer · Aaron Kahan</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; script-src 'self';">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="stylesheet" href="draft-randomizer.css">
+</head>
+<body>
+  <div class="container">
+    <div class="experiment-header">
+      <a href="../../" class="back-link">&larr; back</a>
+      <h1 class="experiment-title">Draft Randomizer</h1>
+    </div>
+
+    <div class="draft-layout">
+      <div class="names-section">
+        <h3>Teams</h3>
+        <form id="name-form">
+          <label for="name-input" class="sr-only">Add a team name</label>
+          <input type="text" id="name-input" placeholder="Add a team name..." autocomplete="off">
+          <button type="submit">Add</button>
+        </form>
+        <ul id="name-list"></ul>
+      </div>
+
+      <div class="results-section">
+        <button id="randomize-btn" disabled>Randomize Draft Order</button>
+        <ol id="draft-order"></ol>
+        <p id="timestamp"></p>
+
+      </div>
+    </div>
+
+    <p class="experiment-desc experiment-desc-spaced">
+      Enter team names, then randomize to generate a fair draft order with a shuffled reveal.
+    </p>
+  </div>
+
+  <script src="draft-randomizer.js"></script>
+</body>
+</html>
