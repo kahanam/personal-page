@@ -23,6 +23,19 @@ const CATEGORIES = {
     toBase: { kg: 1, g: 0.001, lb: 0.453592, oz: 0.0283495 },
     defaults: ["kg", "lb"],
   },
+  volume: {
+    label: "Volume",
+    units: [
+      { id: "l", label: "Liters" },
+      { id: "ml", label: "Milliliters" },
+      { id: "gal", label: "Gallons (US)" },
+      { id: "qt", label: "Quarts (US)" },
+      { id: "cup", label: "Cups (US)" },
+      { id: "floz", label: "Fluid Ounces (US)" },
+    ],
+    toBase: { l: 1, ml: 0.001, gal: 3.785411784, qt: 0.946352946, cup: 0.2365882365, floz: 0.0295735296 },
+    defaults: ["l", "gal"],
+  },
   temperature: {
     label: "Temperature",
     units: [
