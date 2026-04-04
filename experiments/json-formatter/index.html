@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON Formatter · Aaron Kahan</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; script-src 'self';">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="stylesheet" href="json-formatter.css">
+</head>
+<body>
+  <div class="container">
+    <div class="experiment-header">
+      <a href="../../" class="back-link">&larr; back</a>
+      <h1 class="experiment-title">JSON Formatter</h1>
+    </div>
+
+    <div class="formatter-layout">
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <button class="tool-btn" id="format-btn">Format</button>
+          <button class="tool-btn" id="minify-btn">Minify</button>
+          <button class="tool-btn" id="validate-btn">Validate</button>
+          <button class="tool-btn" id="copy-btn">Copy</button>
+          <button class="tool-btn" id="clear-btn">Clear</button>
+        </div>
+        <div class="toolbar-group">
+          <div class="indent-control">
+            <label for="indent-select">Indent</label>
+            <select id="indent-select">
+              <option value="2" selected>2 spaces</option>
+              <option value="4">4 spaces</option>
+              <option value="tab">Tab</option>
+            </select>
+          </div>
+          <button class="tool-btn tool-btn-toggle" id="tree-toggle">Tree View</button>
+        </div>
+      </div>
+
+      <div class="status-bar" id="status-bar">
+        <span class="status-message" id="status-message">Paste or type JSON</span>
+        <span class="status-stats" id="status-stats"></span>
+      </div>
+
+      <div class="editor-area">
+        <div class="line-numbers" id="line-numbers">1</div>
+        <textarea
+          id="json-input"
+          spellcheck="false"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          aria-label="JSON input — press Escape to exit"
+          placeholder='{"paste": "your JSON here"}'
+        ></textarea>
+        <span class="kbd-hint" id="kbd-hint">Esc to exit</span>
+      </div>
+
+      <div class="tree-area hidden" id="tree-area">
+        <div class="tree-header">
+          <span class="tree-title">Structure</span>
+          <button class="tool-btn tool-btn-small" id="collapse-all">Collapse All</button>
+          <button class="tool-btn tool-btn-small" id="expand-all">Expand All</button>
+        </div>
+        <div class="tree-content" id="tree-content"></div>
+      </div>
+    </div>
+
+    <p class="experiment-desc experiment-desc-spaced">
+      Format, minify, and validate JSON. Explore structure with the tree view.
+    </p>
+  </div>
+
+  <script src="json-formatter.js"></script>
+</body>
+</html>

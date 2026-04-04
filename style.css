@@ -10,6 +10,9 @@
   --accent: #7c8cf5;
   --accent-hover: #9aa4ff;
   --accent2: #f5a07c;
+  --color-valid: #6ee7a0;
+  --color-error: #f57c7c;
+  --color-boolean: #c7a0f5;
   --radius: 12px;
 }
 
@@ -33,16 +36,14 @@ body {
   position: relative;
 }
 
-/* subtle gradient bg */
+/* gradient bg */
 body::before {
   content: '';
   position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(ellipse at 30% 20%, rgba(124, 140, 245, 0.06) 0%, transparent 50%),
-              radial-gradient(ellipse at 70% 80%, rgba(245, 160, 124, 0.04) 0%, transparent 50%);
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 15% 10%, rgba(124, 140, 245, 0.45) 0%, transparent 60%),
+              radial-gradient(ellipse 70% 55% at 85% 90%, rgba(245, 160, 124, 0.35) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 50% at 65% 35%, rgba(160, 100, 240, 0.25) 0%, transparent 55%);
   pointer-events: none;
   z-index: 0;
 }
