@@ -150,6 +150,10 @@
 
   function doCopy() {
     if (!input.value) return;
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+      setStatus('Copy requires a secure (HTTPS) context', 'error');
+      return;
+    }
     navigator.clipboard.writeText(input.value).then(function () {
       clearTimeout(copyResetTimer);
       copyBtn.textContent = 'Copied!';
@@ -169,6 +173,8 @@
     updateLineNumbers(1);
     updateStats(1);
     treeContent.textContent = '';
+    pendingTreeData = null;
+    hasPendingTree = false;
   }
 
   // tree view — uses DOM APIs to avoid innerHTML XSS risks
@@ -234,6 +240,13 @@
 
       if (type === 'array') {
         for (let i = 0; i < value.length; i++) {
+          if (ctx.count > MAX_TREE_NODES) {
+            const trunc = document.createElement('div');
+            trunc.className = 'tree-node';
+            trunc.appendChild(createTextSpan('tree-item-count', '\u2026 ' + (value.length - i) + ' more items (too large)'));
+            children.appendChild(trunc);
+            break;
+          }
           const node = document.createElement('div');
           node.className = 'tree-node';
           node.appendChild(buildTreeNode(null, value[i], i === value.length - 1, ctx, depth + 1));
@@ -242,6 +255,13 @@
       } else {
         const keys = Object.keys(value);
         for (let j = 0; j < keys.length; j++) {
+          if (ctx.count > MAX_TREE_NODES) {
+            const trunc = document.createElement('div');
+            trunc.className = 'tree-node';
+            trunc.appendChild(createTextSpan('tree-item-count', '\u2026 ' + (keys.length - j) + ' more keys (too large)'));
+            children.appendChild(trunc);
+            break;
+          }
           const node = document.createElement('div');
           node.className = 'tree-node';
           node.appendChild(buildTreeNode(keys[j], value[keys[j]], j === keys.length - 1, ctx, depth + 1));
@@ -376,6 +396,11 @@
     const text = input.value.trim();
     if (!text) {
       setStatus('Paste or type JSON');
+      if (treeToggle.classList.contains('active')) {
+        treeContent.textContent = '';
+      }
+      pendingTreeData = null;
+      hasPendingTree = false;
       return;
     }
     const result = tryParse(text);

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base64 Encoder/Decoder · Aaron Kahan</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; script-src 'self';">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="stylesheet" href="base64-encoder.css">
+</head>
+<body>
+  <div class="container">
+    <div class="experiment-header">
+      <a href="../../" class="back-link">&larr; back</a>
+      <h1 class="experiment-title">Base64 Encoder/Decoder</h1>
+    </div>
+
+    <div class="encoder-layout">
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <button class="tool-btn active" id="encode-btn">Encode</button>
+          <button class="tool-btn" id="decode-btn">Decode</button>
+          <button class="tool-btn" id="swap-btn">Swap</button>
+          <button class="tool-btn" id="copy-btn">Copy</button>
+          <button class="tool-btn" id="clear-btn">Clear</button>
+        </div>
+        <div class="toolbar-group">
+          <label class="toggle-option" id="url-safe-label">
+            <input type="checkbox" id="url-safe-toggle">
+            <span class="toggle-text">URL-safe</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="status-bar" id="status-bar" aria-live="polite">
+        <span class="status-message" id="status-message">Paste or type text to encode</span>
+        <span class="status-stats" id="status-stats"></span>
+      </div>
+
+      <div class="panels">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-label" id="input-label">Text</span>
+          </div>
+          <textarea
+            id="input-area"
+            spellcheck="false"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            aria-label="Input text for encoding or decoding"
+            placeholder="Paste or type text here&#8230;"
+          ></textarea>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-label" id="output-label">Base64</span>
+          </div>
+          <textarea
+            id="output-area"
+            spellcheck="false"
+            readonly
+            aria-label="Encoded or decoded output"
+            placeholder="Result will appear here&#8230;"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+
+    <p class="experiment-desc experiment-desc-spaced">
+      Encode and decode Base64. Supports Unicode text. Toggle URL-safe mode for URL-compatible output.
+    </p>
+  </div>
+
+  <script src="base64-encoder.js"></script>
+</body>
+</html>
