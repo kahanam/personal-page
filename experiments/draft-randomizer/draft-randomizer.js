@@ -1,3 +1,6 @@
+(function () {
+'use strict';
+
 const nameForm = document.getElementById("name-form");
 const nameInput = document.getElementById("name-input");
 const nameList = document.getElementById("name-list");
@@ -108,4 +111,5 @@ randomizeBtn.addEventListener("click", function () {
   lockedRoster = rosterKey(names);
   revealOrder(shuffle(names), Date.now());
 });
+})();
 

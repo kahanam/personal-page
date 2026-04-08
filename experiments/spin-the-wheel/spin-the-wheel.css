@@ -156,10 +156,6 @@
   color: #ff8a65;
 }
 
-.experiment-desc-spaced {
-  margin-top: 1.5rem;
-}
-
 @media (max-width: 560px) {
   .wheel-section canvas {
     width: 280px;

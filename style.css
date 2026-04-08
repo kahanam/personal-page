@@ -244,6 +244,106 @@ footer {
   line-height: 1.6;
 }
 
+.experiment-desc-spaced {
+  margin-top: 1.25rem;
+}
+
+/* shared dev-tool chrome (toolbar + status bar) */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.tool-btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.tool-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.tool-btn:active {
+  transform: scale(0.97);
+}
+
+.tool-btn.active {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tool-btn.copied {
+  border-color: var(--color-valid);
+  color: var(--color-valid);
+}
+
+.tool-btn-small {
+  font-size: 0.65rem;
+  padding: 0.2rem 0.5rem;
+}
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.8rem;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  font-size: 0.7rem;
+  min-height: 1.8rem;
+}
+
+.status-message {
+  color: var(--text-dim);
+  transition: color 0.2s;
+}
+
+.status-message.valid {
+  color: var(--color-valid);
+}
+
+.status-message.error {
+  color: var(--color-error);
+}
+
+.status-stats {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+  .toolbar {
+    padding: 0.5rem;
+  }
+}
+
 @media (max-width: 560px) {
   .site-name {
     font-size: 1.8rem;

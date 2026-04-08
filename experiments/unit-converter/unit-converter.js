@@ -1,3 +1,6 @@
+(function () {
+'use strict';
+
 const CATEGORIES = {
   length: {
     label: "Length",
@@ -141,3 +144,4 @@ toUnit.addEventListener("change", convert);
 swapBtn.addEventListener("click", swap);
 
 setCategory("length");
+})();

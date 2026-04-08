@@ -13,6 +13,7 @@
   var copyBtn = document.getElementById('copy-btn');
   var clearBtn = document.getElementById('clear-btn');
   var urlSafeToggle = document.getElementById('url-safe-toggle');
+  var urlSafeLabel = document.getElementById('url-safe-label');
 
   var mode = 'encode';
   var MAX_SIZE = 5 * 1024 * 1024;
@@ -149,6 +150,7 @@
     inputLabel.textContent = mode === 'encode' ? 'Text' : 'Base64';
     outputLabel.textContent = mode === 'encode' ? 'Base64' : 'Text';
     inputArea.placeholder = defaultPlaceholder();
+    urlSafeLabel.hidden = mode === 'decode';
     process();
   }
 

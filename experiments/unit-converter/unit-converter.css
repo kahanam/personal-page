@@ -116,10 +116,6 @@
   background: rgba(124, 140, 245, 0.08);
 }
 
-.experiment-desc-spaced {
-  margin-top: 1.5rem;
-}
-
 @media (max-width: 560px) {
   .converter-row {
     flex-direction: column;

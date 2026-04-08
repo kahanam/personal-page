@@ -1,3 +1,6 @@
+(function () {
+'use strict';
+
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
 const spinBtn = document.getElementById("spin-btn");
@@ -27,7 +30,7 @@ function drawWheel() {
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     ctx.fillStyle = "#0f3460";
     ctx.fill();
-    ctx.fillStyle = "#555";
+    ctx.fillStyle = "#d4d4e0";
     ctx.font = "18px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -151,3 +154,4 @@ optionForm.addEventListener("submit", (e) => {
 spinBtn.addEventListener("click", spin);
 
 drawWheel();
+})();
