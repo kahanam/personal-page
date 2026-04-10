@@ -10,6 +10,7 @@
   const DEFAULT_STATE = {
     calorieEntries: [], // { id, date: 'YYYY-MM-DD', name, calories }
     weightEntries: [],  // { date: 'YYYY-MM-DD', weight }
+    frequentFoods: [],  // { id, name, calories }
     settings: {
       dailyCalorieTarget: 2000,
       goalWeight: 180
@@ -37,6 +38,7 @@
     return {
       calorieEntries: Array.isArray(obj.calorieEntries) ? obj.calorieEntries : [],
       weightEntries: Array.isArray(obj.weightEntries) ? obj.weightEntries : [],
+      frequentFoods: Array.isArray(obj.frequentFoods) ? obj.frequentFoods : [],
       settings: { ...DEFAULT_STATE.settings, ...(obj.settings || {}) }
     };
   }
@@ -108,6 +110,64 @@
     }
   }
 
+  // ─── Frequent foods ───────────────────────────────
+  function renderFrequentFoods() {
+    const container = document.getElementById('frequent-foods');
+    const list = document.getElementById('frequent-list');
+    list.replaceChildren();
+
+    if (state.frequentFoods.length === 0) {
+      container.hidden = true;
+      return;
+    }
+    container.hidden = false;
+
+    for (const food of state.frequentFoods) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'cc-frequent-chip';
+      chip.title = 'Add ' + food.name + ' (' + food.calories + ' kcal)';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'cc-frequent-chip-name';
+      nameSpan.textContent = food.name;
+
+      const calSpan = document.createElement('span');
+      calSpan.className = 'cc-frequent-chip-cal';
+      calSpan.textContent = food.calories;
+
+      const delBtn = document.createElement('span');
+      delBtn.className = 'cc-frequent-chip-del';
+      delBtn.textContent = '\u00d7';
+      delBtn.setAttribute('role', 'button');
+      delBtn.setAttribute('aria-label', 'Remove ' + food.name + ' from frequent foods');
+
+      chip.append(nameSpan, calSpan, delBtn);
+
+      chip.addEventListener('click', function (e) {
+        if (e.target === delBtn || delBtn.contains(e.target)) {
+          state.frequentFoods = state.frequentFoods.filter(function (f) { return f.id !== food.id; });
+          saveState();
+          renderFrequentFoods();
+          return;
+        }
+        addCalorieEntry(food.name, food.calories);
+      });
+
+      list.appendChild(chip);
+    }
+  }
+
+  function addFrequentFood(name, calories) {
+    state.frequentFoods.push({
+      id: crypto.randomUUID(),
+      name: name,
+      calories: Math.round(calories)
+    });
+    saveState();
+    renderFrequentFoods();
+  }
+
   // ─── Today view ────────────────────────────────────
   function getEntriesForDate(dateStr) {
     return state.calorieEntries.filter(e => e.date === dateStr);
@@ -142,6 +202,8 @@
     const pct = target > 0 ? Math.min(100, (total / target) * 100) : 0;
     progressEl.setAttribute('width', String(pct));
     progressEl.classList.toggle('over', target > 0 && total > target);
+
+    renderFrequentFoods();
 
     // Entry list
     const list = document.getElementById('today-list');
@@ -653,6 +715,17 @@
       const cal = Number(foodCal.value);
       if (!name || !Number.isFinite(cal) || cal <= 0) return;
       addCalorieEntry(name, cal);
+      foodName.value = '';
+      foodCal.value = '';
+      foodName.focus();
+    });
+
+    // Fav button — save current food as frequent
+    document.getElementById('food-fav').addEventListener('click', function () {
+      const name = foodName.value.trim();
+      const cal = Number(foodCal.value);
+      if (!name || !Number.isFinite(cal) || cal <= 0) return;
+      addFrequentFood(name, cal);
       foodName.value = '';
       foodCal.value = '';
       foodName.focus();

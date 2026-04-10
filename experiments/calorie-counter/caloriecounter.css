@@ -225,6 +225,81 @@
   background: color-mix(in srgb, var(--color-error) 8%, var(--bg-card));
 }
 
+/* ─── Fav button ──────────────────────────────────── */
+.cc-btn-fav {
+  padding: 0.65rem 0.7rem;
+  font-size: 1.05rem;
+  line-height: 1;
+  color: var(--text-dim);
+}
+
+.cc-btn-fav:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ─── Frequent foods ──────────────────────────────── */
+.cc-frequent {
+  margin-bottom: 1.2rem;
+}
+
+.cc-frequent-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.cc-frequent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.cc-frequent-chip:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-card));
+}
+
+.cc-frequent-chip:active {
+  transform: scale(0.96);
+}
+
+.cc-frequent-chip-cal {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cc-frequent-chip-cal::before {
+  content: '\00b7  ';
+}
+
+.cc-frequent-chip-del {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+  margin-left: 0.1rem;
+}
+
+.cc-frequent-chip:hover .cc-frequent-chip-del {
+  opacity: 1;
+}
+
+.cc-frequent-chip-del:hover {
+  color: var(--color-error);
+}
+
 /* ─── Entry lists ──────────────────────────────────── */
 .cc-entry-list,
 .cc-history-list {
@@ -409,7 +484,13 @@
   flex-wrap: wrap;
 }
 
-/* ─── Narrow screens ───────────────────────────────── */
+/* ─── Touch / narrow screens ──────────────────────── */
+@media (hover: none) {
+  .cc-frequent-chip-del {
+    opacity: 0.6;
+  }
+}
+
 @media (max-width: 560px) {
   .cc-summary-value {
     font-size: 1.6rem;

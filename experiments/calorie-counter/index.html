@@ -53,8 +53,13 @@
           <input type="text" id="food-name" class="cc-input cc-input-grow" placeholder="What did you eat?" required>
           <input type="number" id="food-calories" class="cc-input cc-input-cal" placeholder="kcal" min="0" step="1" required inputmode="numeric">
           <button type="submit" class="cc-btn cc-btn-primary">Add</button>
+          <button type="button" id="food-fav" class="cc-btn cc-btn-fav" title="Save as frequent food" aria-label="Save as frequent food">&#9734;</button>
         </div>
       </form>
+
+      <div class="cc-frequent" id="frequent-foods" hidden>
+        <div class="cc-frequent-list" id="frequent-list"></div>
+      </div>
 
       <ul class="cc-entry-list" id="today-list" aria-label="Today's entries"></ul>
     </section>
