@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calorie Counter · Aaron Kahan</title>
+  <meta name="description" content="Local-only calorie and weight tracker. All data stays in your browser.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'self'; style-src 'self'; font-src 'self'; img-src 'self'; script-src 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="stylesheet" href="caloriecounter.css">
+</head>
+<body>
+  <div class="container">
+    <div class="experiment-header">
+      <a href="../../" class="back-link">&larr; back</a>
+      <h1 class="experiment-title">Calorie Counter</h1>
+    </div>
+
+    <nav class="cc-tabs" role="tablist" aria-label="Sections">
+      <button type="button" class="cc-tab active" data-view="today" role="tab" aria-selected="true">Today</button>
+      <button type="button" class="cc-tab" data-view="weight" role="tab" aria-selected="false">Weight</button>
+      <button type="button" class="cc-tab" data-view="history" role="tab" aria-selected="false">History</button>
+      <button type="button" class="cc-tab" data-view="settings" role="tab" aria-selected="false">Settings</button>
+    </nav>
+
+    <!-- ─── Today ─────────────────────────────────────────── -->
+    <section class="cc-view" id="view-today" role="tabpanel" aria-label="Today">
+      <div class="cc-date-heading" id="today-date"></div>
+
+      <div class="cc-summary-card">
+        <div class="cc-summary-top">
+          <div>
+            <div class="cc-summary-label">Today's calories</div>
+            <div class="cc-summary-value">
+              <span id="today-total">0</span><span class="cc-summary-unit"> / <span id="today-target">2000</span></span>
+            </div>
+          </div>
+          <div class="cc-summary-right">
+            <div class="cc-summary-label">Remaining</div>
+            <div class="cc-summary-value-sm" id="today-remaining">2000</div>
+          </div>
+        </div>
+        <svg class="cc-progress" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true">
+          <rect class="cc-progress-bg" x="0" y="0" width="100" height="4"/>
+          <rect class="cc-progress-fill" id="today-progress" x="0" y="0" width="0" height="4"/>
+        </svg>
+      </div>
+
+      <form class="cc-form" id="food-form" autocomplete="off">
+        <div class="cc-form-row">
+          <input type="text" id="food-name" class="cc-input cc-input-grow" placeholder="What did you eat?" required>
+          <input type="number" id="food-calories" class="cc-input cc-input-cal" placeholder="kcal" min="0" step="1" required inputmode="numeric">
+          <button type="submit" class="cc-btn cc-btn-primary">Add</button>
+        </div>
+      </form>
+
+      <ul class="cc-entry-list" id="today-list" aria-label="Today's entries"></ul>
+    </section>
+
+    <!-- ─── Weight ────────────────────────────────────────── -->
+    <section class="cc-view" id="view-weight" role="tabpanel" aria-label="Weight" hidden>
+      <div class="cc-summary-card">
+        <div class="cc-summary-top">
+          <div>
+            <div class="cc-summary-label">Current weight</div>
+            <div class="cc-summary-value">
+              <span id="current-weight">—</span><span class="cc-summary-unit"> lbs</span>
+            </div>
+          </div>
+          <div class="cc-summary-right">
+            <div class="cc-summary-label">Goal</div>
+            <div class="cc-summary-value-sm">
+              <span id="goal-weight-display">—</span>
+            </div>
+            <div class="cc-summary-sub" id="weight-to-goal"></div>
+          </div>
+        </div>
+      </div>
+
+      <form class="cc-form" id="weight-form" autocomplete="off">
+        <div class="cc-form-row">
+          <input type="date" id="weight-date" class="cc-input cc-input-date" required>
+          <input type="number" id="weight-value" class="cc-input cc-input-grow" placeholder="Weight (lbs)" step="0.1" min="0" required inputmode="decimal">
+          <button type="submit" class="cc-btn cc-btn-primary">Log</button>
+        </div>
+      </form>
+
+      <div class="cc-chart-wrap">
+        <canvas id="weight-chart" width="680" height="280" aria-label="Weight over time chart"></canvas>
+      </div>
+    </section>
+
+    <!-- ─── History ───────────────────────────────────────── -->
+    <section class="cc-view" id="view-history" role="tabpanel" aria-label="History" hidden>
+      <div class="cc-chart-wrap">
+        <canvas id="calories-chart" width="680" height="280" aria-label="Daily calories chart"></canvas>
+      </div>
+      <h3 class="cc-subheading">Past days</h3>
+      <ul class="cc-history-list" id="history-list" aria-label="Past daily totals"></ul>
+    </section>
+
+    <!-- ─── Settings ──────────────────────────────────────── -->
+    <section class="cc-view" id="view-settings" role="tabpanel" aria-label="Settings" hidden>
+      <form class="cc-form cc-settings-form" id="settings-form" autocomplete="off">
+        <div class="cc-setting">
+          <label for="setting-cal-target">Daily calorie target</label>
+          <input type="number" id="setting-cal-target" class="cc-input" min="0" step="10" inputmode="numeric">
+        </div>
+        <div class="cc-setting">
+          <label for="setting-goal-weight">Goal weight (lbs)</label>
+          <input type="number" id="setting-goal-weight" class="cc-input" min="0" step="0.1" inputmode="decimal">
+        </div>
+        <div class="cc-setting-actions">
+          <button type="submit" class="cc-btn cc-btn-primary">Save</button>
+          <span class="cc-form-status" id="settings-status" aria-live="polite"></span>
+        </div>
+      </form>
+
+      <div class="cc-settings-group">
+        <h3 class="cc-subheading">Data</h3>
+        <p class="cc-settings-note">All data is stored locally in this browser. Export regularly to back up.</p>
+        <div class="cc-btn-row">
+          <button type="button" class="cc-btn" id="export-btn">Export JSON</button>
+          <button type="button" class="cc-btn" id="import-btn">Import JSON</button>
+          <button type="button" class="cc-btn cc-btn-danger" id="clear-btn">Clear all data</button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden>
+        </div>
+        <span class="cc-form-status cc-data-status" id="data-status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <p class="experiment-desc experiment-desc-spaced">
+      A local-only calorie and weight tracker. Nothing is uploaded — everything lives in this browser's localStorage.
+      Use Export to back up your data.
+    </p>
+  </div>
+
+  <script src="caloriecounter.js"></script>
+</body>
+</html>

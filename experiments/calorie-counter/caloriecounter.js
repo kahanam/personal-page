@@ -1,0 +1,730 @@
+/*
+ * Calorie Counter — local-only calorie and weight tracker.
+ * All data lives in localStorage. No network calls.
+ */
+(function () {
+  'use strict';
+
+  const STORAGE_KEY = 'caloriecounter.v1';
+
+  const DEFAULT_STATE = {
+    calorieEntries: [], // { id, date: 'YYYY-MM-DD', name, calories }
+    weightEntries: [],  // { date: 'YYYY-MM-DD', weight }
+    settings: {
+      dailyCalorieTarget: 2000,
+      goalWeight: 180
+    }
+  };
+
+  // ─── State ─────────────────────────────────────────
+  let state = loadState();
+  let currentView = 'today';
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return clone(DEFAULT_STATE);
+      const parsed = JSON.parse(raw);
+      return normalizeState(parsed);
+    } catch (err) {
+      console.error('Failed to load state, resetting', err);
+      return clone(DEFAULT_STATE);
+    }
+  }
+
+  function normalizeState(obj) {
+    if (!obj || typeof obj !== 'object') return clone(DEFAULT_STATE);
+    return {
+      calorieEntries: Array.isArray(obj.calorieEntries) ? obj.calorieEntries : [],
+      weightEntries: Array.isArray(obj.weightEntries) ? obj.weightEntries : [],
+      settings: { ...DEFAULT_STATE.settings, ...(obj.settings || {}) }
+    };
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function clone(v) {
+    return JSON.parse(JSON.stringify(v));
+  }
+
+  // ─── Date helpers ──────────────────────────────────
+  function toDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function todayStr() {
+    return toDateStr(new Date());
+  }
+
+  /** Parse YYYY-MM-DD to a local-time Date at midnight. */
+  function fromDateStr(str) {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  function formatDateLong(dateStr) {
+    return fromDateStr(dateStr).toLocaleDateString(undefined, {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+  }
+
+  function formatDateShort(dateStr) {
+    return fromDateStr(dateStr).toLocaleDateString(undefined, {
+      month: 'short', day: 'numeric'
+    });
+  }
+
+  function formatDateMedium(dateStr) {
+    return fromDateStr(dateStr).toLocaleDateString(undefined, {
+      weekday: 'short', month: 'short', day: 'numeric'
+    });
+  }
+
+  // ─── View routing ──────────────────────────────────
+  function showView(name) {
+    currentView = name;
+    document.querySelectorAll('.cc-tab').forEach(tab => {
+      const active = tab.dataset.view === name;
+      tab.classList.toggle('active', active);
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    document.querySelectorAll('.cc-view').forEach(view => {
+      view.hidden = view.id !== `view-${name}`;
+    });
+    renderCurrentView();
+  }
+
+  function renderCurrentView() {
+    switch (currentView) {
+      case 'today':    renderToday();    break;
+      case 'weight':   renderWeight();   break;
+      case 'history':  renderHistory();  break;
+      case 'settings': renderSettings(); break;
+    }
+  }
+
+  // ─── Today view ────────────────────────────────────
+  function getEntriesForDate(dateStr) {
+    return state.calorieEntries.filter(e => e.date === dateStr);
+  }
+
+  function getTotalForDate(dateStr) {
+    return getEntriesForDate(dateStr).reduce((sum, e) => sum + e.calories, 0);
+  }
+
+  function renderToday() {
+    const today = todayStr();
+    const entries = getEntriesForDate(today);
+    const total = getTotalForDate(today);
+    const target = Number(state.settings.dailyCalorieTarget) || 0;
+    const remaining = target - total;
+
+    document.getElementById('today-date').textContent = formatDateLong(today);
+    document.getElementById('today-total').textContent = total.toLocaleString();
+    document.getElementById('today-target').textContent = target.toLocaleString();
+
+    const remainingEl = document.getElementById('today-remaining');
+    if (target <= 0) {
+      remainingEl.textContent = '—';
+    } else if (remaining >= 0) {
+      remainingEl.textContent = remaining.toLocaleString();
+    } else {
+      remainingEl.textContent = `+${Math.abs(remaining).toLocaleString()}`;
+    }
+
+    // Progress bar — set SVG width attribute (CSP-safe)
+    const progressEl = document.getElementById('today-progress');
+    const pct = target > 0 ? Math.min(100, (total / target) * 100) : 0;
+    progressEl.setAttribute('width', String(pct));
+    progressEl.classList.toggle('over', target > 0 && total > target);
+
+    // Entry list
+    const list = document.getElementById('today-list');
+    list.replaceChildren();
+    if (entries.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'cc-empty';
+      li.textContent = 'No entries yet. Add your first meal above.';
+      list.appendChild(li);
+      return;
+    }
+    for (const entry of entries) {
+      const li = document.createElement('li');
+      li.className = 'cc-entry';
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'cc-entry-name';
+      nameEl.textContent = entry.name;
+
+      const calEl = document.createElement('span');
+      calEl.className = 'cc-entry-cal';
+      calEl.textContent = `${entry.calories.toLocaleString()} kcal`;
+
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'cc-entry-delete';
+      delBtn.setAttribute('aria-label', `Delete ${entry.name}`);
+      delBtn.textContent = '×';
+      delBtn.addEventListener('click', () => {
+        state.calorieEntries = state.calorieEntries.filter(e => e.id !== entry.id);
+        saveState();
+        renderToday();
+      });
+
+      li.append(nameEl, calEl, delBtn);
+      list.appendChild(li);
+    }
+  }
+
+  // ─── Weight view ───────────────────────────────────
+  function renderWeight() {
+    const sorted = [...state.weightEntries].sort((a, b) => a.date.localeCompare(b.date));
+    const current = sorted[sorted.length - 1];
+    const goal = Number(state.settings.goalWeight);
+    const hasGoal = Number.isFinite(goal) && goal > 0;
+
+    const currentEl = document.getElementById('current-weight');
+    const goalEl = document.getElementById('goal-weight-display');
+    const toGoalEl = document.getElementById('weight-to-goal');
+
+    currentEl.textContent = current ? current.weight.toFixed(1) : '—';
+    goalEl.textContent = hasGoal ? `${goal.toFixed(1)} lbs` : '—';
+
+    if (current && hasGoal) {
+      const diff = current.weight - goal;
+      const abs = Math.abs(diff).toFixed(1);
+      if (diff > 0.05)       toGoalEl.textContent = `${abs} lbs to lose`;
+      else if (diff < -0.05) toGoalEl.textContent = `${abs} lbs to gain`;
+      else                   toGoalEl.textContent = 'at goal';
+    } else {
+      toGoalEl.textContent = '';
+    }
+
+    // Default date input to today if empty
+    const dateInput = document.getElementById('weight-date');
+    if (!dateInput.value) dateInput.value = todayStr();
+
+    drawWeightChart(sorted, hasGoal ? goal : null);
+  }
+
+  // ─── History view ──────────────────────────────────
+  function renderHistory() {
+    // Build last-14-days window (including today)
+    const days = [];
+    const totals = [];
+    const today = new Date();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const str = toDateStr(d);
+      days.push(str);
+      totals.push(getTotalForDate(str));
+    }
+    drawCaloriesChart(days, totals, Number(state.settings.dailyCalorieTarget) || 0);
+
+    // Past daily totals list — all distinct dates, newest first
+    const dateSet = new Set(state.calorieEntries.map(e => e.date));
+    const dates = [...dateSet].sort((a, b) => b.localeCompare(a));
+
+    const list = document.getElementById('history-list');
+    list.replaceChildren();
+    if (dates.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'cc-empty';
+      li.textContent = 'No history yet.';
+      list.appendChild(li);
+      return;
+    }
+    const target = Number(state.settings.dailyCalorieTarget) || 0;
+    for (const d of dates) {
+      const total = getTotalForDate(d);
+      const li = document.createElement('li');
+      li.className = 'cc-history-entry';
+
+      const dateEl = document.createElement('span');
+      dateEl.className = 'cc-history-date';
+      dateEl.textContent = formatDateMedium(d);
+
+      const calEl = document.createElement('span');
+      calEl.className = 'cc-history-cal';
+      if (target > 0 && total > target) calEl.classList.add('over');
+      calEl.textContent = `${total.toLocaleString()} kcal`;
+
+      li.append(dateEl, calEl);
+      list.appendChild(li);
+    }
+  }
+
+  // ─── Settings view ─────────────────────────────────
+  function renderSettings() {
+    document.getElementById('setting-cal-target').value = state.settings.dailyCalorieTarget ?? '';
+    document.getElementById('setting-goal-weight').value = state.settings.goalWeight ?? '';
+    const status = document.getElementById('settings-status');
+    status.textContent = '';
+    status.classList.remove('show');
+  }
+
+  // ─── Canvas charts ─────────────────────────────────
+
+  /**
+   * Resize the canvas backing store to match CSS size at devicePixelRatio,
+   * and return a context + CSS-pixel dimensions for drawing.
+   */
+  function prepareCanvas(canvas) {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    // Width/height are canvas attributes, not style — safe under strict CSP.
+    canvas.width = Math.max(1, Math.round(rect.width * dpr));
+    canvas.height = Math.max(1, Math.round(rect.height * dpr));
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w: rect.width, h: rect.height };
+  }
+
+  function getThemeColors() {
+    const cs = getComputedStyle(document.documentElement);
+    const get = name => cs.getPropertyValue(name).trim();
+    return {
+      accent:  get('--accent')   || '#7c8cf5',
+      accent2: get('--accent2')  || '#f5a07c',
+      text:    get('--text')     || '#d4d4e0',
+      textDim: get('--text-dim') || '#7a7a95',
+      border:  get('--border')   || '#2e2e45'
+    };
+  }
+
+  /** Produces round tick values for a nice axis. */
+  function niceScale(min, max, ticks = 5) {
+    if (min === max) {
+      const pad = Math.abs(min) * 0.1 || 1;
+      min -= pad;
+      max += pad;
+    }
+    const range = niceNum(max - min, false);
+    const step = niceNum(range / (ticks - 1), true);
+    const niceMin = Math.floor(min / step) * step;
+    const niceMax = Math.ceil(max / step) * step;
+    return { min: niceMin, max: niceMax, step };
+  }
+
+  function niceNum(range, round) {
+    const exp = Math.floor(Math.log10(Math.max(range, 1e-9)));
+    const frac = range / Math.pow(10, exp);
+    let nice;
+    if (round) {
+      if (frac < 1.5)     nice = 1;
+      else if (frac < 3)  nice = 2;
+      else if (frac < 7)  nice = 5;
+      else                nice = 10;
+    } else {
+      if (frac <= 1)      nice = 1;
+      else if (frac <= 2) nice = 2;
+      else if (frac <= 5) nice = 5;
+      else                nice = 10;
+    }
+    return nice * Math.pow(10, exp);
+  }
+
+  function drawNoData(ctx, w, h, colors, msg) {
+    ctx.fillStyle = colors.textDim;
+    ctx.font = '13px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(msg, w / 2, h / 2);
+  }
+
+  function drawWeightChart(entries, goal) {
+    const canvas = document.getElementById('weight-chart');
+    const { ctx, w, h } = prepareCanvas(canvas);
+    ctx.clearRect(0, 0, w, h);
+
+    const colors = getThemeColors();
+    const pad = { top: 20, right: 24, bottom: 36, left: 52 };
+    const plotW = w - pad.left - pad.right;
+    const plotH = h - pad.top - pad.bottom;
+
+    if (entries.length === 0) {
+      drawNoData(ctx, w, h, colors, 'No weight entries yet');
+      return;
+    }
+
+    const weights = entries.map(e => e.weight);
+    let minV = Math.min(...weights);
+    let maxV = Math.max(...weights);
+    if (goal != null) {
+      minV = Math.min(minV, goal);
+      maxV = Math.max(maxV, goal);
+    }
+    const scale = niceScale(minV - 1, maxV + 1, 5);
+
+    // Gridlines + Y-axis labels
+    ctx.font = '11px Inter, sans-serif';
+    ctx.lineWidth = 1;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    const yFor = v => pad.top + plotH - ((v - scale.min) / (scale.max - scale.min)) * plotH;
+
+    for (let v = scale.min; v <= scale.max + 0.0001; v += scale.step) {
+      const y = yFor(v);
+      ctx.strokeStyle = colors.border;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(w - pad.right, y);
+      ctx.stroke();
+      ctx.fillStyle = colors.textDim;
+      ctx.fillText(v.toFixed(0), pad.left - 8, y);
+    }
+
+    // X-axis mapping
+    const first = fromDateStr(entries[0].date).getTime();
+    const last  = fromDateStr(entries[entries.length - 1].date).getTime();
+    const xRange = last - first;
+    const xFor = ts => {
+      if (xRange === 0) return pad.left + plotW / 2;
+      return pad.left + ((ts - first) / xRange) * plotW;
+    };
+
+    // X-axis labels (up to 3: first, middle, last)
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = colors.textDim;
+    const labelDates = [];
+    if (entries.length === 1) {
+      labelDates.push(entries[0].date);
+    } else {
+      labelDates.push(entries[0].date);
+      if (entries.length >= 3) labelDates.push(entries[Math.floor(entries.length / 2)].date);
+      labelDates.push(entries[entries.length - 1].date);
+    }
+    for (const d of labelDates) {
+      const x = xFor(fromDateStr(d).getTime());
+      ctx.fillText(formatDateShort(d), x, pad.top + plotH + 8);
+    }
+
+    // Goal line (dashed)
+    if (goal != null) {
+      ctx.save();
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = colors.accent2;
+      ctx.lineWidth = 1.5;
+      const gy = yFor(goal);
+      ctx.beginPath();
+      ctx.moveTo(pad.left, gy);
+      ctx.lineTo(w - pad.right, gy);
+      ctx.stroke();
+      ctx.restore();
+
+      // Goal label, tucked above the line near the right edge
+      ctx.fillStyle = colors.accent2;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(`goal ${goal}`, w - pad.right - 2, gy - 3);
+    }
+
+    // Area under line (subtle fill)
+    ctx.save();
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
+    grad.addColorStop(0, colors.accent + '55');
+    grad.addColorStop(1, colors.accent + '00');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    entries.forEach((e, i) => {
+      const x = xFor(fromDateStr(e.date).getTime());
+      const y = yFor(e.weight);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    const lastX = xFor(fromDateStr(entries[entries.length - 1].date).getTime());
+    const firstX = xFor(fromDateStr(entries[0].date).getTime());
+    ctx.lineTo(lastX, pad.top + plotH);
+    ctx.lineTo(firstX, pad.top + plotH);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Line
+    ctx.strokeStyle = colors.accent;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    entries.forEach((e, i) => {
+      const x = xFor(fromDateStr(e.date).getTime());
+      const y = yFor(e.weight);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Points
+    ctx.fillStyle = colors.accent;
+    for (const e of entries) {
+      const x = xFor(fromDateStr(e.date).getTime());
+      const y = yFor(e.weight);
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawCaloriesChart(days, totals, target) {
+    const canvas = document.getElementById('calories-chart');
+    const { ctx, w, h } = prepareCanvas(canvas);
+    ctx.clearRect(0, 0, w, h);
+
+    const colors = getThemeColors();
+    const pad = { top: 20, right: 24, bottom: 42, left: 52 };
+    const plotW = w - pad.left - pad.right;
+    const plotH = h - pad.top - pad.bottom;
+
+    const hasData = totals.some(t => t > 0);
+    if (!hasData && !(target > 0)) {
+      drawNoData(ctx, w, h, colors, 'No calorie entries yet');
+      return;
+    }
+
+    const maxV = Math.max(...totals, target || 0, 10);
+    const scale = niceScale(0, maxV * 1.1, 5);
+
+    // Gridlines + Y labels
+    ctx.font = '11px Inter, sans-serif';
+    ctx.lineWidth = 1;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    const yFor = v => pad.top + plotH - ((v - scale.min) / (scale.max - scale.min)) * plotH;
+
+    for (let v = scale.min; v <= scale.max + 0.0001; v += scale.step) {
+      const y = yFor(v);
+      ctx.strokeStyle = colors.border;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(w - pad.right, y);
+      ctx.stroke();
+      ctx.fillStyle = colors.textDim;
+      ctx.fillText(v.toLocaleString(), pad.left - 8, y);
+    }
+
+    // Bars
+    const n = days.length;
+    const slot = plotW / n;
+    const barW = Math.max(4, slot * 0.68);
+    const todayVal = todayStr();
+    for (let i = 0; i < n; i++) {
+      const x = pad.left + i * slot + (slot - barW) / 2;
+      const val = totals[i];
+      const y = yFor(val);
+      const barH = Math.max(0, pad.top + plotH - y);
+      const isOver = target > 0 && val > target;
+      const isToday = days[i] === todayVal;
+      ctx.fillStyle = isOver ? colors.accent2 : colors.accent;
+      ctx.globalAlpha = val === 0 ? 0.2 : (isToday ? 1 : 0.8);
+      // Rounded top corners
+      const r = Math.min(3, barW / 2, barH);
+      ctx.beginPath();
+      ctx.moveTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.lineTo(x + barW - r, y);
+      ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+      ctx.lineTo(x + barW, pad.top + plotH);
+      ctx.lineTo(x, pad.top + plotH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // Target line (dashed)
+    if (target > 0) {
+      ctx.save();
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = colors.accent2;
+      ctx.lineWidth = 1.5;
+      const ty = yFor(target);
+      ctx.beginPath();
+      ctx.moveTo(pad.left, ty);
+      ctx.lineTo(w - pad.right, ty);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = colors.accent2;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(`target ${target.toLocaleString()}`, w - pad.right - 2, yFor(target) - 3);
+    }
+
+    // X labels — first, middle, last
+    ctx.fillStyle = colors.textDim;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const labelIndices = n >= 3 ? [0, Math.floor(n / 2), n - 1] : [...Array(n).keys()];
+    for (const i of labelIndices) {
+      const x = pad.left + i * slot + slot / 2;
+      ctx.fillText(formatDateShort(days[i]), x, pad.top + plotH + 10);
+    }
+  }
+
+  // ─── Actions ───────────────────────────────────────
+  function addCalorieEntry(name, calories) {
+    state.calorieEntries.push({
+      id: crypto.randomUUID(),
+      date: todayStr(),
+      name: name,
+      calories: Math.round(calories)
+    });
+    saveState();
+    renderToday();
+  }
+
+  function upsertWeightEntry(date, weight) {
+    // Only one entry per day — a new entry for the same date overwrites.
+    state.weightEntries = state.weightEntries.filter(e => e.date !== date);
+    state.weightEntries.push({ date, weight });
+    saveState();
+    renderWeight();
+  }
+
+  function exportData() {
+    const json = JSON.stringify(state, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `calorie-counter-${todayStr()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function showDataStatus(message, isError) {
+    const el = document.getElementById('data-status');
+    if (!el) return;
+    el.textContent = message;
+    el.classList.toggle('error', !!isError);
+    el.classList.add('show');
+    clearTimeout(showDataStatus._t);
+    showDataStatus._t = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  function importData(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        state = normalizeState(parsed);
+        saveState();
+        renderCurrentView();
+        showDataStatus('Imported');
+      } catch (err) {
+        showDataStatus('Import failed: ' + err.message, true);
+      }
+    };
+    reader.onerror = () => showDataStatus('Failed to read file', true);
+    reader.readAsText(file);
+  }
+
+  function clearAllData() {
+    state = clone(DEFAULT_STATE);
+    saveState();
+    renderCurrentView();
+    showDataStatus('Cleared');
+  }
+
+  // ─── Init ──────────────────────────────────────────
+  function init() {
+    // Tabs
+    document.querySelectorAll('.cc-tab').forEach(tab => {
+      tab.addEventListener('click', () => showView(tab.dataset.view));
+    });
+
+    // Food form
+    const foodForm = document.getElementById('food-form');
+    const foodName = document.getElementById('food-name');
+    const foodCal  = document.getElementById('food-calories');
+    foodForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const name = foodName.value.trim();
+      const cal = Number(foodCal.value);
+      if (!name || !Number.isFinite(cal) || cal <= 0) return;
+      addCalorieEntry(name, cal);
+      foodName.value = '';
+      foodCal.value = '';
+      foodName.focus();
+    });
+
+    // Weight form
+    const weightForm = document.getElementById('weight-form');
+    const weightDate = document.getElementById('weight-date');
+    const weightValue = document.getElementById('weight-value');
+    weightDate.value = todayStr();
+    weightForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const date = weightDate.value;
+      const val = Number(weightValue.value);
+      if (!date || !Number.isFinite(val) || val <= 0) return;
+      upsertWeightEntry(date, val);
+      weightValue.value = '';
+      weightValue.focus();
+    });
+
+    // Settings form
+    const settingsForm = document.getElementById('settings-form');
+    settingsForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const cal = Number(document.getElementById('setting-cal-target').value);
+      const goal = Number(document.getElementById('setting-goal-weight').value);
+      if (Number.isFinite(cal) && cal >= 0) state.settings.dailyCalorieTarget = cal;
+      if (Number.isFinite(goal) && goal >= 0) state.settings.goalWeight = goal;
+      saveState();
+      const status = document.getElementById('settings-status');
+      status.textContent = 'Saved';
+      status.classList.add('show');
+      setTimeout(() => status.classList.remove('show'), 1500);
+    });
+
+    // Data management
+    document.getElementById('export-btn').addEventListener('click', exportData);
+
+    const importFile = document.getElementById('import-file');
+    document.getElementById('import-btn').addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', () => {
+      const file = importFile.files && importFile.files[0];
+      if (!file) return;
+      if (!confirm('This will overwrite all existing data. Continue?')) {
+        importFile.value = '';
+        return;
+      }
+      importData(file);
+      importFile.value = '';
+    });
+
+    document.getElementById('clear-btn').addEventListener('click', () => {
+      if (!confirm('Delete ALL calorie entries, weight entries, and settings? This cannot be undone.')) return;
+      clearAllData();
+    });
+
+    // Redraw charts on resize (only for views with charts)
+    let resizeRaf = 0;
+    window.addEventListener('resize', () => {
+      if (currentView !== 'weight' && currentView !== 'history') return;
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(renderCurrentView);
+    });
+
+    // Initial view
+    showView('today');
+    foodName.focus();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
