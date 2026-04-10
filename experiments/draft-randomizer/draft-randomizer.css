@@ -15,7 +15,8 @@
   max-width: 300px;
 }
 
-.names-section h3 {
+.names-section h2 {
+  font-family: 'Sora', sans-serif;
   font-size: 1rem;
   font-weight: 600;
   color: #fff;
@@ -92,7 +93,7 @@
 }
 
 #name-list li button:hover {
-  color: #ff8a65;
+  color: var(--accent2-hover);
 }
 
 .results-section {

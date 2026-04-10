@@ -26,10 +26,23 @@ function checkLock() {
   }
 }
 
+function secureRandomInt(maxExclusive) {
+  // Rejection sampling to avoid modulo bias.
+  const range = 0x100000000; // 2^32
+  const limit = range - (range % maxExclusive);
+  const buf = new Uint32Array(1);
+  let r;
+  do {
+    crypto.getRandomValues(buf);
+    r = buf[0];
+  } while (r >= limit);
+  return r % maxExclusive;
+}
+
 function shuffle(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = secureRandomInt(i + 1);
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;

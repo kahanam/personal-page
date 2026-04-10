@@ -17,6 +17,74 @@
   const collapseAll = document.getElementById('collapse-all');
   const expandAll = document.getElementById('expand-all');
 
+  const MAX_INPUT_SIZE = 5 * 1024 * 1024; // 5 MB
+
+  function byteLength(text) {
+    return new Blob([text]).size;
+  }
+
+  // Worker: offload JSON.parse / JSON.stringify so large inputs don't block the UI.
+  let worker = null;
+  try {
+    worker = new Worker('json-worker.js');
+  } catch (e) {
+    worker = null;
+  }
+
+  let nextRequestId = 0;
+  const pending = new Map();
+
+  function failAllPending(message) {
+    pending.forEach(function (req) {
+      req.resolve({ ok: false, error: message });
+    });
+    pending.clear();
+  }
+
+  if (worker) {
+    worker.addEventListener('message', function (e) {
+      const req = pending.get(e.data.id);
+      if (!req) return;
+      pending.delete(e.data.id);
+      req.resolve(e.data);
+    });
+    worker.addEventListener('error', function () {
+      failAllPending('Worker error');
+      worker = null;
+    });
+    worker.addEventListener('messageerror', function () {
+      failAllPending('Worker message error');
+    });
+  }
+
+  function runSync(op, text, indent, wantValue) {
+    try {
+      const value = JSON.parse(text);
+      if (op === 'parse') return { ok: true, value: value };
+      if (op === 'format') return { ok: true, value: wantValue ? value : undefined, output: JSON.stringify(value, null, indent) };
+      if (op === 'minify') return { ok: true, value: wantValue ? value : undefined, output: JSON.stringify(value) };
+      return { ok: false, error: 'Unknown op' };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  }
+
+  function workerRequest(op, text, indent, wantValue) {
+    if (!worker) {
+      return Promise.resolve(runSync(op, text, indent, wantValue));
+    }
+    return new Promise(function (resolve) {
+      const id = ++nextRequestId;
+      pending.set(id, { resolve: resolve });
+      try {
+        worker.postMessage({ id: id, op: op, text: text, indent: indent, wantValue: !!wantValue });
+      } catch (err) {
+        pending.delete(id);
+        resolve({ ok: false, error: err.message });
+      }
+    });
+  }
+
   function getIndent() {
     const val = indentSelect.value;
     if (val === 'tab') return '\t';
@@ -60,22 +128,8 @@
     }
   }
 
-  const MAX_INPUT_SIZE = 5 * 1024 * 1024; // 5 MB
-
-  function tryParse(text) {
-    if (text.length > MAX_INPUT_SIZE) {
-      return { value: null, error: new SyntaxError('Input too large (max 5 MB)') };
-    }
-    try {
-      const parsed = JSON.parse(text);
-      return { value: parsed, error: null };
-    } catch (e) {
-      return { value: null, error: e };
-    }
-  }
-
-  function getErrorDetails(e, text) {
-    const msg = e.message || 'Invalid JSON';
+  function getErrorDetails(msg, text) {
+    msg = msg || 'Invalid JSON';
     const posMatch = msg.match(/position\s+(\d+)/i);
     if (posMatch) {
       const pos = parseInt(posMatch[1], 10);
@@ -96,53 +150,68 @@
     return msg;
   }
 
-  function withParsed(callback) {
-    const text = input.value.trim();
-    if (!text) return null;
-    const result = tryParse(text);
-    if (result.error) {
-      setStatus(getErrorDetails(result.error, text), 'error');
-      return null;
-    }
-    return callback(result.value);
-  }
-
-  function refreshAfterChange(value) {
+  function refreshAfterTextChange(value) {
     const lines = getLineCount(input.value);
     updateLineNumbers(lines);
     updateStats(lines);
-    if (treeToggle.classList.contains('active')) {
+    if (value !== undefined && treeToggle.classList.contains('active')) {
       renderTree(value);
     }
   }
 
-  function doFormat() {
-    withParsed(function (value) {
-      input.value = JSON.stringify(value, null, getIndent());
+  async function doFormat() {
+    const text = input.value;
+    if (!text.trim()) return;
+    if (byteLength(text) > MAX_INPUT_SIZE) {
+      setStatus('Input too large (max 5 MB)', 'error');
+      return;
+    }
+    const treeActive = treeToggle.classList.contains('active');
+    const result = await workerRequest('format', text, getIndent(), treeActive);
+    if (input.value !== text) return; // user typed while we worked
+    if (result.ok) {
+      input.value = result.output;
       setStatus('Formatted', 'valid');
-      refreshAfterChange(value);
-    });
+      refreshAfterTextChange(result.value);
+    } else {
+      setStatus(getErrorDetails(result.error, text), 'error');
+    }
   }
 
-  function doMinify() {
-    withParsed(function (value) {
-      input.value = JSON.stringify(value);
+  async function doMinify() {
+    const text = input.value;
+    if (!text.trim()) return;
+    if (byteLength(text) > MAX_INPUT_SIZE) {
+      setStatus('Input too large (max 5 MB)', 'error');
+      return;
+    }
+    const treeActive = treeToggle.classList.contains('active');
+    const result = await workerRequest('minify', text, null, treeActive);
+    if (input.value !== text) return;
+    if (result.ok) {
+      input.value = result.output;
       setStatus('Minified', 'valid');
-      refreshAfterChange(value);
-    });
+      refreshAfterTextChange(result.value);
+    } else {
+      setStatus(getErrorDetails(result.error, text), 'error');
+    }
   }
 
-  function doValidate() {
+  async function doValidate() {
     const text = input.value.trim();
     if (!text) {
       setStatus('Paste or type JSON');
       return;
     }
-    const result = tryParse(text);
-    if (result.error) {
-      setStatus(getErrorDetails(result.error, text), 'error');
-    } else {
+    if (byteLength(text) > MAX_INPUT_SIZE) {
+      setStatus('Input too large (max 5 MB)', 'error');
+      return;
+    }
+    const result = await workerRequest('parse', text);
+    if (result.ok) {
       setStatus('Valid JSON', 'valid');
+    } else {
+      setStatus(getErrorDetails(result.error, text), 'error');
     }
   }
 
@@ -173,8 +242,6 @@
     updateLineNumbers(1);
     updateStats(1);
     treeContent.textContent = '';
-    pendingTreeData = null;
-    hasPendingTree = false;
   }
 
   // tree view — uses DOM APIs to avoid innerHTML XSS risks
@@ -299,6 +366,14 @@
     treeContent.appendChild(buildTreeNode(null, data, true, { count: 0 }));
   }
 
+  function renderTreeError() {
+    treeContent.textContent = '';
+    const msg = document.createElement('span');
+    msg.classList.add('status-message', 'error');
+    msg.textContent = 'Fix JSON errors first';
+    treeContent.appendChild(msg);
+  }
+
   // tree toggle expand/collapse
   treeContent.addEventListener('click', function (e) {
     const toggle = e.target.closest('[data-action="toggle"]');
@@ -333,25 +408,23 @@
     }
   });
 
-  treeToggle.addEventListener('click', function () {
+  treeToggle.addEventListener('click', async function () {
     treeToggle.classList.toggle('active');
     const isActive = treeToggle.classList.contains('active');
     treeArea.classList.toggle('hidden', !isActive);
-
-    if (isActive) {
-      const text = input.value.trim();
-      if (text) {
-        const result = tryParse(text);
-        if (!result.error) {
-          renderTree(result.value);
-        } else {
-          treeContent.textContent = '';
-          const msg = document.createElement('span');
-          msg.classList.add('status-message', 'error');
-          msg.textContent = 'Fix JSON errors first';
-          treeContent.appendChild(msg);
-        }
-      }
+    if (!isActive) return;
+    const text = input.value.trim();
+    if (!text) return;
+    if (byteLength(text) > MAX_INPUT_SIZE) {
+      renderTreeError();
+      return;
+    }
+    const result = await workerRequest('parse', text);
+    if (input.value.trim() !== text) return; // stale
+    if (result.ok) {
+      renderTree(result.value);
+    } else {
+      renderTreeError();
     }
   });
 
@@ -367,7 +440,36 @@
     }
   });
 
-  // debounce helper
+  // live updates — debounced and race-safe via request sequence
+  let liveRequestSeq = 0;
+
+  async function handleLiveInput() {
+    const text = input.value.trim();
+    if (!text) {
+      setStatus('Paste or type JSON');
+      if (treeToggle.classList.contains('active')) {
+        treeContent.textContent = '';
+      }
+      return;
+    }
+    if (byteLength(text) > MAX_INPUT_SIZE) {
+      setStatus('Input too large (max 5 MB)', 'error');
+      return;
+    }
+    const mySeq = ++liveRequestSeq;
+    const treeActive = treeToggle.classList.contains('active');
+    const result = await workerRequest('parse', text);
+    if (mySeq !== liveRequestSeq) return; // a newer request superseded this
+    if (result.ok) {
+      setStatus('Valid JSON', 'valid');
+      if (treeActive) {
+        renderTree(result.value);
+      }
+    } else {
+      setStatus(getErrorDetails(result.error, text), 'error');
+    }
+  }
+
   function debounce(fn, delay) {
     let timer;
     return function () {
@@ -376,44 +478,13 @@
     };
   }
 
-  let pendingTreeData = null;
-  let hasPendingTree = false;
+  const debouncedLiveInput = debounce(handleLiveInput, 150);
 
-  const debouncedTreeRender = debounce(function () {
-    if (hasPendingTree) {
-      renderTree(pendingTreeData);
-      pendingTreeData = null;
-      hasPendingTree = false;
-    }
-  }, 250);
-
-  // live updates
   input.addEventListener('input', function () {
     const lines = getLineCount(input.value);
     updateLineNumbers(lines);
     updateStats(lines);
-
-    const text = input.value.trim();
-    if (!text) {
-      setStatus('Paste or type JSON');
-      if (treeToggle.classList.contains('active')) {
-        treeContent.textContent = '';
-      }
-      pendingTreeData = null;
-      hasPendingTree = false;
-      return;
-    }
-    const result = tryParse(text);
-    if (result.error) {
-      setStatus(getErrorDetails(result.error, text), 'error');
-    } else {
-      setStatus('Valid JSON', 'valid');
-      if (treeToggle.classList.contains('active')) {
-        pendingTreeData = result.value;
-        hasPendingTree = true;
-        debouncedTreeRender();
-      }
-    }
+    debouncedLiveInput();
   });
 
   // tab key handling — Escape releases focus for keyboard navigation

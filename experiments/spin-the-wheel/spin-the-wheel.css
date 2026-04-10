@@ -76,7 +76,8 @@
   max-width: 300px;
 }
 
-.options-section h3 {
+.options-section h2 {
+  font-family: 'Sora', sans-serif;
   font-size: 1rem;
   font-weight: 600;
   color: #fff;
@@ -153,7 +154,7 @@
 }
 
 #option-list li button:hover {
-  color: #ff8a65;
+  color: var(--accent2-hover);
 }
 
 @media (max-width: 560px) {

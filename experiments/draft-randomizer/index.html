@@ -4,8 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Draft Randomizer · Aaron Kahan</title>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; script-src 'self';">
+  <meta name="description" content="Generate a fair, cryptographically random draft order for your fantasy league.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; script-src 'self';">
   <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap">
   <link rel="stylesheet" href="../../style.css">
   <link rel="stylesheet" href="draft-randomizer.css">
 </head>
@@ -18,7 +22,7 @@
 
     <div class="draft-layout">
       <div class="names-section">
-        <h3>Teams</h3>
+        <h2>Teams</h2>
         <form id="name-form">
           <label for="name-input" class="sr-only">Add a team name</label>
           <input type="text" id="name-input" placeholder="Add a team name..." autocomplete="off">

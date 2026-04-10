@@ -16,7 +16,7 @@
   var urlSafeLabel = document.getElementById('url-safe-label');
 
   var mode = 'encode';
-  var MAX_SIZE = 5 * 1024 * 1024;
+  var MAX_BYTES = 5 * 1024 * 1024;
 
   // --- Helpers ---
 
@@ -104,6 +104,10 @@
 
   // --- Process ---
 
+  function byteLength(text) {
+    return new Blob([text]).size;
+  }
+
   function process() {
     var text = inputArea.value;
     if (!text) {
@@ -113,7 +117,7 @@
       return;
     }
 
-    if (text.length > MAX_SIZE) {
+    if (byteLength(text) > MAX_BYTES) {
       outputArea.value = '';
       setStatus('Input too large (max 5 MB)', 'error');
       updateStats();

@@ -1,6 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap');
-
 :root {
+  color-scheme: dark;
   --bg: #151520;
   --bg-card: #1c1c2e;
   --bg-card-hover: #22223a;
@@ -10,6 +9,7 @@
   --accent: #7c8cf5;
   --accent-hover: #9aa4ff;
   --accent2: #f5a07c;
+  --accent2-hover: #ff8a65;
   --color-valid: #6ee7a0;
   --color-error: #f57c7c;
   --color-boolean: #c7a0f5;
@@ -41,9 +41,9 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background: radial-gradient(ellipse 80% 60% at 15% 10%, rgba(124, 140, 245, 0.45) 0%, transparent 60%),
-              radial-gradient(ellipse 70% 55% at 85% 90%, rgba(245, 160, 124, 0.35) 0%, transparent 60%),
-              radial-gradient(ellipse 60% 50% at 65% 35%, rgba(160, 100, 240, 0.25) 0%, transparent 55%);
+  background: radial-gradient(ellipse 80% 60% at 15% 10%, color-mix(in srgb, var(--accent) 45%, transparent) 0%, transparent 60%),
+              radial-gradient(ellipse 70% 55% at 85% 90%, color-mix(in srgb, var(--accent2) 35%, transparent) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 50% at 65% 35%, color-mix(in srgb, var(--color-boolean) 25%, transparent) 0%, transparent 55%);
   pointer-events: none;
   z-index: 0;
 }
@@ -339,17 +339,26 @@ footer {
 }
 
 @media (max-width: 560px) {
-  .toolbar {
-    padding: 0.5rem;
-  }
-}
-
-@media (max-width: 560px) {
   .site-name {
     font-size: 1.8rem;
   }
 
   .container {
     padding: 2rem 1rem;
+  }
+
+  .toolbar {
+    padding: 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -4,8 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Spin the Wheel · Aaron Kahan</title>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; script-src 'self';">
+  <meta name="description" content="A simple random decision picker. Add options, spin the wheel, pick one.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; script-src 'self';">
   <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap">
   <link rel="stylesheet" href="../../style.css">
   <link rel="stylesheet" href="spin-the-wheel.css">
 </head>
@@ -26,7 +30,7 @@
         <p id="result" aria-live="polite"></p>
       </div>
       <div class="options-section">
-        <h3>Options</h3>
+        <h2>Options</h2>
         <form id="option-form">
           <label for="option-input" class="sr-only">Add an option</label>
           <input type="text" id="option-input" placeholder="Add an option..." autocomplete="off">
