@@ -8,7 +8,7 @@
   const STORAGE_KEY = 'caloriecounter.v1';
 
   const DEFAULT_STATE = {
-    calorieEntries: [], // { id, date: 'YYYY-MM-DD', name, calories }
+    calorieEntries: [], // { id, date: 'YYYY-MM-DD', name, calories, quantity }
     weightEntries: [],  // { date: 'YYYY-MM-DD', weight }
     frequentFoods: [],  // { id, name, calories }
     settings: {
@@ -174,7 +174,7 @@
   }
 
   function getTotalForDate(dateStr) {
-    return getEntriesForDate(dateStr).reduce((sum, e) => sum + e.calories, 0);
+    return getEntriesForDate(dateStr).reduce((sum, e) => sum + e.calories * (e.quantity || 1), 0);
   }
 
   function renderToday() {
@@ -216,16 +216,34 @@
       return;
     }
     for (const entry of entries) {
+      const qty = entry.quantity || 1;
       const li = document.createElement('li');
       li.className = 'cc-entry';
 
       const nameEl = document.createElement('span');
       nameEl.className = 'cc-entry-name';
       nameEl.textContent = entry.name;
+      if (qty > 1) {
+        const qtyBadge = document.createElement('span');
+        qtyBadge.className = 'cc-entry-qty';
+        qtyBadge.textContent = '\u00d7' + qty;
+        nameEl.appendChild(qtyBadge);
+      }
 
       const calEl = document.createElement('span');
       calEl.className = 'cc-entry-cal';
-      calEl.textContent = `${entry.calories.toLocaleString()} kcal`;
+      calEl.textContent = `${(entry.calories * qty).toLocaleString()} kcal`;
+
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'cc-entry-add';
+      addBtn.setAttribute('aria-label', `Add another ${entry.name}`);
+      addBtn.textContent = '+';
+      addBtn.addEventListener('click', () => {
+        entry.quantity = qty + 1;
+        saveState();
+        renderToday();
+      });
 
       const delBtn = document.createElement('button');
       delBtn.type = 'button';
@@ -238,7 +256,7 @@
         renderToday();
       });
 
-      li.append(nameEl, calEl, delBtn);
+      li.append(nameEl, calEl, addBtn, delBtn);
       list.appendChild(li);
     }
   }
@@ -632,12 +650,26 @@
   }
 
   // ─── Actions ───────────────────────────────────────
-  function addCalorieEntry(name, calories) {
+  function addCalorieEntry(name, calories, quantity) {
+    var qty = quantity || 1;
+    var today = todayStr();
+    var cal = Math.round(calories);
+    // Merge with existing entry if same name and calories on same day
+    var existing = state.calorieEntries.find(
+      e => e.date === today && e.name === name && e.calories === cal
+    );
+    if (existing) {
+      existing.quantity = (existing.quantity || 1) + qty;
+      saveState();
+      renderToday();
+      return;
+    }
     state.calorieEntries.push({
       id: crypto.randomUUID(),
-      date: todayStr(),
+      date: today,
       name: name,
-      calories: Math.round(calories)
+      calories: cal,
+      quantity: qty
     });
     saveState();
     renderToday();
@@ -709,14 +741,17 @@
     const foodForm = document.getElementById('food-form');
     const foodName = document.getElementById('food-name');
     const foodCal  = document.getElementById('food-calories');
+    const foodQty  = document.getElementById('food-qty');
     foodForm.addEventListener('submit', e => {
       e.preventDefault();
       const name = foodName.value.trim();
       const cal = Number(foodCal.value);
       if (!name || !Number.isFinite(cal) || cal <= 0) return;
-      addCalorieEntry(name, cal);
+      const qty = Number(foodQty.value) || 1;
+      addCalorieEntry(name, cal, qty);
       foodName.value = '';
       foodCal.value = '';
+      foodQty.value = '';
       foodName.focus();
     });
 

@@ -178,6 +178,25 @@
   max-width: 110px;
 }
 
+.cc-input-qty {
+  flex: 0 0 64px;
+  max-width: 72px;
+}
+
+/* Hide number spinners on kcal and qty inputs */
+.cc-input-cal::-webkit-inner-spin-button,
+.cc-input-cal::-webkit-outer-spin-button,
+.cc-input-qty::-webkit-inner-spin-button,
+.cc-input-qty::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.cc-input-cal,
+.cc-input-qty {
+  -moz-appearance: textfield;
+}
+
 .cc-input-date {
   flex: 0 0 150px;
 }
@@ -333,12 +352,49 @@
   white-space: nowrap;
 }
 
+.cc-entry-qty {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin-left: 0.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .cc-entry-cal {
   color: var(--accent);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   min-width: 70px;
   text-align: right;
+}
+
+.cc-entry-add {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 1.05rem;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  font-family: inherit;
+  padding: 0;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.cc-entry-add:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.cc-entry-add:active {
+  transform: scale(0.92);
 }
 
 .cc-entry-delete {
