@@ -268,8 +268,10 @@
   var CAL_PER_LB = 3500;
 
   /**
-   * Calculate expected weight from the most recent weigh-in to today
-   * using daily (calories eaten - TDEE) surplus/deficit.
+   * Calculate expected weight using weekly normalization.
+   * Anchors to the most recent weekly reset (a weigh-in 7+ days after
+   * the previous anchor) and projects forward using calorie data.
+   * Days with no calorie entries are treated as maintenance (TDEE).
    * Returns { expected, fromDate, fromWeight } or null.
    */
   function calcExpectedWeight() {
@@ -279,31 +281,41 @@
     var sorted = [...state.weightEntries].sort((a, b) => a.date.localeCompare(b.date));
     if (sorted.length === 0) return null;
 
-    var last = sorted[sorted.length - 1];
-    var startDate = fromDateStr(last.date);
+    // Build weekly anchor chain: reset only when 7+ days since last anchor
+    var anchor = sorted[0];
+    for (var i = 1; i < sorted.length; i++) {
+      var daysSince = (fromDateStr(sorted[i].date) - fromDateStr(anchor.date)) / 86400000;
+      if (daysSince >= 7) {
+        anchor = sorted[i];
+      }
+    }
+
+    var startDate = fromDateStr(anchor.date);
     var today = new Date();
     today.setHours(0, 0, 0, 0);
 
     var cumulative = 0;
     var d = new Date(startDate);
-    d.setDate(d.getDate() + 1); // start the day after last weigh-in
+    d.setDate(d.getDate() + 1);
     while (d <= today) {
       var dateStr = toDateStr(d);
-      var eaten = getTotalForDate(dateStr);
+      var entries = getEntriesForDate(dateStr);
+      var eaten = entries.length > 0 ? getTotalForDate(dateStr) : tdee;
       cumulative += eaten - tdee;
       d.setDate(d.getDate() + 1);
     }
 
     return {
-      expected: last.weight + cumulative / CAL_PER_LB,
-      fromDate: last.date,
-      fromWeight: last.weight
+      expected: anchor.weight + cumulative / CAL_PER_LB,
+      fromDate: anchor.date,
+      fromWeight: anchor.weight
     };
   }
 
   /**
-   * Build projected weight points from each weight entry forward,
-   * day by day using (calories eaten − TDEE) / 3500.
+   * Build projected weight points with weekly normalization.
+   * Resets to actual weight only on weigh-ins that are 7+ days after
+   * the last reset. Days with no calorie entries assume maintenance (TDEE).
    * Returns array of { date, weight } sorted by date.
    */
   function buildProjectedWeightSeries() {
@@ -315,20 +327,24 @@
 
     var today = todayStr();
     var points = [];
-    // Walk from first weigh-in, resetting on each actual weigh-in
     var weightIdx = 0;
     var currentWeight = sorted[0].weight;
-    var d = new Date(fromDateStr(sorted[0].date));
+    var lastResetDate = fromDateStr(sorted[0].date);
+    var d = new Date(lastResetDate);
     var end = fromDateStr(today);
 
     while (d <= end) {
       var ds = toDateStr(d);
-      // If there's an actual weigh-in on this date, reset
       if (weightIdx < sorted.length && sorted[weightIdx].date === ds) {
-        currentWeight = sorted[weightIdx].weight;
+        var daysSinceReset = (d - lastResetDate) / 86400000;
+        if (weightIdx === 0 || daysSinceReset >= 7) {
+          currentWeight = sorted[weightIdx].weight;
+          lastResetDate = new Date(d);
+        }
         weightIdx++;
       } else {
-        var eaten = getTotalForDate(ds);
+        var entries = getEntriesForDate(ds);
+        var eaten = entries.length > 0 ? getTotalForDate(ds) : tdee;
         currentWeight += (eaten - tdee) / CAL_PER_LB;
       }
       points.push({ date: ds, weight: currentWeight });
