@@ -111,6 +111,22 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ─── Expected weight row ─────────────────────────── */
+.cc-expected-row {
+  border-top: 1px solid var(--border);
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+}
+
+.cc-expected-value {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--accent2);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
 /* ─── Progress bar (SVG) ───────────────────────────── */
 .cc-progress {
   display: block;

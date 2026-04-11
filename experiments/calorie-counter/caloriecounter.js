@@ -13,7 +13,8 @@
     frequentFoods: [],  // { id, name, calories }
     settings: {
       dailyCalorieTarget: 2000,
-      goalWeight: 180
+      goalWeight: 180,
+      tdee: 2000
     }
   };
 
@@ -262,6 +263,80 @@
   }
 
   // ─── Weight view ───────────────────────────────────
+
+  /** Calories per pound of body weight. */
+  var CAL_PER_LB = 3500;
+
+  /**
+   * Calculate expected weight from the most recent weigh-in to today
+   * using daily (calories eaten - TDEE) surplus/deficit.
+   * Returns { expected, fromDate, fromWeight } or null.
+   */
+  function calcExpectedWeight() {
+    var tdee = Number(state.settings.tdee);
+    if (!Number.isFinite(tdee) || tdee <= 0) return null;
+
+    var sorted = [...state.weightEntries].sort((a, b) => a.date.localeCompare(b.date));
+    if (sorted.length === 0) return null;
+
+    var last = sorted[sorted.length - 1];
+    var startDate = fromDateStr(last.date);
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    var cumulative = 0;
+    var d = new Date(startDate);
+    d.setDate(d.getDate() + 1); // start the day after last weigh-in
+    while (d <= today) {
+      var dateStr = toDateStr(d);
+      var eaten = getTotalForDate(dateStr);
+      cumulative += eaten - tdee;
+      d.setDate(d.getDate() + 1);
+    }
+
+    return {
+      expected: last.weight + cumulative / CAL_PER_LB,
+      fromDate: last.date,
+      fromWeight: last.weight
+    };
+  }
+
+  /**
+   * Build projected weight points from each weight entry forward,
+   * day by day using (calories eaten − TDEE) / 3500.
+   * Returns array of { date, weight } sorted by date.
+   */
+  function buildProjectedWeightSeries() {
+    var tdee = Number(state.settings.tdee);
+    if (!Number.isFinite(tdee) || tdee <= 0) return [];
+
+    var sorted = [...state.weightEntries].sort((a, b) => a.date.localeCompare(b.date));
+    if (sorted.length === 0) return [];
+
+    var today = todayStr();
+    var points = [];
+    // Walk from first weigh-in, resetting on each actual weigh-in
+    var weightIdx = 0;
+    var currentWeight = sorted[0].weight;
+    var d = new Date(fromDateStr(sorted[0].date));
+    var end = fromDateStr(today);
+
+    while (d <= end) {
+      var ds = toDateStr(d);
+      // If there's an actual weigh-in on this date, reset
+      if (weightIdx < sorted.length && sorted[weightIdx].date === ds) {
+        currentWeight = sorted[weightIdx].weight;
+        weightIdx++;
+      } else {
+        var eaten = getTotalForDate(ds);
+        currentWeight += (eaten - tdee) / CAL_PER_LB;
+      }
+      points.push({ date: ds, weight: currentWeight });
+      d.setDate(d.getDate() + 1);
+    }
+    return points;
+  }
+
   function renderWeight() {
     const sorted = [...state.weightEntries].sort((a, b) => a.date.localeCompare(b.date));
     const current = sorted[sorted.length - 1];
@@ -285,11 +360,26 @@
       toGoalEl.textContent = '';
     }
 
+    // Expected weight
+    const expectedEl = document.getElementById('expected-weight');
+    const expectedSubEl = document.getElementById('expected-weight-sub');
+    const expectedInfo = calcExpectedWeight();
+    if (expectedInfo) {
+      expectedEl.textContent = expectedInfo.expected.toFixed(1);
+      const delta = expectedInfo.expected - expectedInfo.fromWeight;
+      const sign = delta >= 0 ? '+' : '';
+      expectedSubEl.textContent = `${sign}${delta.toFixed(1)} lbs since ${formatDateShort(expectedInfo.fromDate)}`;
+    } else {
+      expectedEl.textContent = '—';
+      expectedSubEl.textContent = '';
+    }
+
     // Default date input to today if empty
     const dateInput = document.getElementById('weight-date');
     if (!dateInput.value) dateInput.value = todayStr();
 
-    drawWeightChart(sorted, hasGoal ? goal : null);
+    const projected = buildProjectedWeightSeries();
+    drawWeightChart(sorted, hasGoal ? goal : null, projected);
   }
 
   // ─── History view ──────────────────────────────────
@@ -344,6 +434,7 @@
   function renderSettings() {
     document.getElementById('setting-cal-target').value = state.settings.dailyCalorieTarget ?? '';
     document.getElementById('setting-goal-weight').value = state.settings.goalWeight ?? '';
+    document.getElementById('setting-tdee').value = state.settings.tdee ?? '';
     const status = document.getElementById('settings-status');
     status.textContent = '';
     status.classList.remove('show');
@@ -418,7 +509,7 @@
     ctx.fillText(msg, w / 2, h / 2);
   }
 
-  function drawWeightChart(entries, goal) {
+  function drawWeightChart(entries, goal, projected) {
     const canvas = document.getElementById('weight-chart');
     const { ctx, w, h } = prepareCanvas(canvas);
     ctx.clearRect(0, 0, w, h);
@@ -434,8 +525,9 @@
     }
 
     const weights = entries.map(e => e.weight);
-    let minV = Math.min(...weights);
-    let maxV = Math.max(...weights);
+    const projWeights = projected && projected.length ? projected.map(p => p.weight) : [];
+    let minV = Math.min(...weights, ...projWeights);
+    let maxV = Math.max(...weights, ...projWeights);
     if (goal != null) {
       minV = Math.min(minV, goal);
       maxV = Math.max(maxV, goal);
@@ -461,9 +553,13 @@
       ctx.fillText(v.toFixed(0), pad.left - 8, y);
     }
 
-    // X-axis mapping
-    const first = fromDateStr(entries[0].date).getTime();
-    const last  = fromDateStr(entries[entries.length - 1].date).getTime();
+    // X-axis mapping — include projected dates in range
+    const allDates = entries.map(e => fromDateStr(e.date).getTime());
+    if (projected && projected.length) {
+      for (const p of projected) allDates.push(fromDateStr(p.date).getTime());
+    }
+    const first = Math.min(...allDates);
+    const last  = Math.max(...allDates);
     const xRange = last - first;
     const xFor = ts => {
       if (xRange === 0) return pad.left + plotW / 2;
@@ -550,6 +646,26 @@
       ctx.beginPath();
       ctx.arc(x, y, 3, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    // Projected weight line (dashed, accent2)
+    if (projected && projected.length >= 2) {
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = colors.accent2;
+      ctx.lineWidth = 1.5;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath();
+      projected.forEach((p, i) => {
+        const x = xFor(fromDateStr(p.date).getTime());
+        const y = yFor(p.weight);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.restore();
     }
   }
 
@@ -787,8 +903,10 @@
       e.preventDefault();
       const cal = Number(document.getElementById('setting-cal-target').value);
       const goal = Number(document.getElementById('setting-goal-weight').value);
+      const tdee = Number(document.getElementById('setting-tdee').value);
       if (Number.isFinite(cal) && cal >= 0) state.settings.dailyCalorieTarget = cal;
       if (Number.isFinite(goal) && goal >= 0) state.settings.goalWeight = goal;
+      if (Number.isFinite(tdee) && tdee >= 0) state.settings.tdee = tdee;
       saveState();
       const status = document.getElementById('settings-status');
       status.textContent = 'Saved';
