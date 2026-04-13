@@ -33,7 +33,7 @@
 
 .wheel-section canvas {
   border-radius: 50%;
-  box-shadow: 0 0 30px rgba(124, 140, 245, 0.15);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
 #spin-btn {

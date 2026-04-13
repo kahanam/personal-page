@@ -12,13 +12,13 @@ Open `index.html` directly in a browser or serve with any static file server (e.
 
 ## Architecture
 
-- `index.html` — landing page; links to experiments and external sites
+- `index.html` — landing page; links to tools and external sites
 - `style.css` — global styles shared by all pages (design tokens in `:root` CSS variables, dark theme)
-- `experiments/<name>/` — each experiment lives in its own folder with an `index.html`, plus optional `.js` and `.css` files; experiment pages import `../../style.css` for shared styling and add their own assets
+- `tools/<name>/` — each tool lives in its own folder with an `index.html`, plus optional `.js` and `.css` files; tool pages import `../../style.css` for shared styling and add their own assets
 
 ## Conventions
 
 - All pages enforce a strict Content-Security-Policy via `<meta>` tag: no inline scripts or styles; only `'self'` and explicit font origins allowed
 - Fonts: Inter (body) and Sora (headings) loaded from Google Fonts
 - CSS color palette uses custom properties (`--bg`, `--accent`, `--text`, etc.) defined in `:root`
-- Experiment pages follow a consistent layout: back-link + title header (`.experiment-header`), canvas/content area, controls, description
+- Tool pages follow a consistent layout: back-link + title header (`.tool-header`), canvas/content area, controls, description

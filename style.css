@@ -34,20 +34,20 @@
 
 :root {
   color-scheme: dark;
-  --bg: #151520;
-  --bg-card: #1c1c2e;
-  --bg-card-hover: #22223a;
-  --border: #2e2e45;
-  --text: #d4d4e0;
-  --text-dim: #7a7a95;
-  --accent: #7c8cf5;
-  --accent-hover: #9aa4ff;
-  --accent2: #f5a07c;
-  --accent2-hover: #ff8a65;
-  --color-valid: #6ee7a0;
-  --color-error: #f57c7c;
-  --color-boolean: #c7a0f5;
-  --radius: 12px;
+  --bg: #171411;
+  --bg-card: #1e1b17;
+  --bg-card-hover: #27231e;
+  --border: #362f28;
+  --text: #ddd6ca;
+  --text-dim: #807870;
+  --accent: #cc9a6a;
+  --accent-hover: #daa878;
+  --accent2: #cc9a6a;
+  --accent2-hover: #daa878;
+  --color-valid: #6aaa7a;
+  --color-error: #c06050;
+  --color-boolean: #9a8ab0;
+  --radius: 8px;
 }
 
 * {
@@ -70,18 +70,6 @@ body {
   position: relative;
 }
 
-/* gradient bg */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(ellipse 80% 60% at 15% 10%, color-mix(in srgb, var(--accent) 45%, transparent) 0%, transparent 60%),
-              radial-gradient(ellipse 70% 55% at 85% 90%, color-mix(in srgb, var(--accent2) 35%, transparent) 0%, transparent 60%),
-              radial-gradient(ellipse 60% 50% at 65% 35%, color-mix(in srgb, var(--color-boolean) 25%, transparent) 0%, transparent 55%);
-  pointer-events: none;
-  z-index: 0;
-}
-
 .container {
   max-width: 720px;
   margin: 0 auto;
@@ -100,7 +88,7 @@ header {
   font-family: 'Sora', sans-serif;
   font-size: 2.4rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text);
   letter-spacing: -0.02em;
 }
 
@@ -118,10 +106,12 @@ section {
 
 h2 {
   font-family: 'Sora', sans-serif;
-  font-size: 1.25rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: #fff;
-  margin-bottom: 0.4rem;
+  color: var(--accent);
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 
 .section-desc {
@@ -130,51 +120,49 @@ h2 {
   margin-bottom: 1.5rem;
 }
 
-/* experiment cards */
-.experiment-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
+/* tool cards */
+.tool-grid {
+  display: flex;
+  flex-direction: column;
 }
 
-@media (min-width: 560px) {
-  .experiment-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.experiment-card {
+.tool-card {
   display: block;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.25rem;
+  background: transparent;
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 0;
   text-decoration: none;
   color: var(--text);
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  transition: color 0.15s;
   position: relative;
 }
 
-.experiment-card:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--accent);
-  transform: translateY(-2px);
+.tool-card:last-child {
+  border-bottom: none;
+}
+
+.tool-card:hover {
+  color: var(--accent);
+}
+
+.tool-card:hover h3 {
+  color: var(--accent);
 }
 
 .card-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.6rem;
+  display: none;
 }
 
-.experiment-card h3 {
+.tool-card h3 {
   font-family: 'Sora', sans-serif;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: #fff;
-  margin-bottom: 0.25rem;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+  transition: color 0.15s;
 }
 
-.experiment-card p {
+.tool-card p {
   font-size: 0.8rem;
   color: var(--text-dim);
   margin-bottom: 0.75rem;
@@ -182,12 +170,7 @@ h2 {
 }
 
 .card-tag {
-  font-size: 0.7rem;
-  color: var(--accent);
-  background: rgba(124, 140, 245, 0.1);
-  padding: 0.2rem 0.5rem;
-  border-radius: 6px;
-  font-weight: 500;
+  display: none;
 }
 
 /* links */
@@ -211,7 +194,6 @@ h2 {
 .link-pill:hover {
   border-color: var(--accent);
   color: var(--accent);
-  background: rgba(124, 140, 245, 0.08);
 }
 
 /* footer */
@@ -241,8 +223,8 @@ footer {
   border: 0;
 }
 
-/* experiment sub-page layout */
-.experiment-header {
+/* tool sub-page layout */
+.tool-header {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -262,23 +244,23 @@ footer {
 
 .back-link:hover {
   border-color: var(--accent);
-  background: rgba(124, 140, 245, 0.08);
+  color: var(--accent);
 }
 
-.experiment-title {
+.tool-title {
   font-family: 'Sora', sans-serif;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text);
 }
 
-.experiment-desc {
+.tool-desc {
   font-size: 0.8rem;
   color: var(--text-dim);
   line-height: 1.6;
 }
 
-.experiment-desc-spaced {
+.tool-desc-spaced {
   margin-top: 1.25rem;
 }
 

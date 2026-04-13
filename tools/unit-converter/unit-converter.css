@@ -113,7 +113,7 @@
 
 #swap-btn:hover {
   border-color: var(--accent);
-  background: rgba(124, 140, 245, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 @media (max-width: 560px) {
