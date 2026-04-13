@@ -366,6 +366,8 @@
     const toGoalEl = document.getElementById('weight-to-goal');
 
     currentEl.textContent = current ? current.weight.toFixed(1) : '—';
+    const currentDateEl = document.getElementById('current-weight-date');
+    currentDateEl.textContent = current ? formatDateShort(current.date) : '';
     goalEl.textContent = hasGoal ? `${goal.toFixed(1)} lbs` : '—';
 
     if (current && hasGoal) {
