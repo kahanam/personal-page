@@ -510,6 +510,12 @@
   letter-spacing: 0.06em;
 }
 
+.cc-setting-hint {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
 .cc-setting-actions {
   display: flex;
   align-items: center;
