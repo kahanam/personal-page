@@ -277,15 +277,16 @@
   function calcExpectedWeight() {
     var tdee = Number(state.settings.tdee);
     if (!Number.isFinite(tdee) || tdee <= 0) return null;
+    var normDays = Number(state.settings.normalizationDays) || 7;
 
     var sorted = [...state.weightEntries].sort((a, b) => a.date.localeCompare(b.date));
     if (sorted.length === 0) return null;
 
-    // Build weekly anchor chain: reset only when 7+ days since last anchor
+    // Build anchor chain: reset only when normDays+ days since last anchor
     var anchor = sorted[0];
     for (var i = 1; i < sorted.length; i++) {
       var daysSince = (fromDateStr(sorted[i].date) - fromDateStr(anchor.date)) / 86400000;
-      if (daysSince >= 7) {
+      if (daysSince >= normDays) {
         anchor = sorted[i];
       }
     }
@@ -321,6 +322,7 @@
   function buildProjectedWeightSeries() {
     var tdee = Number(state.settings.tdee);
     if (!Number.isFinite(tdee) || tdee <= 0) return [];
+    var normDays = Number(state.settings.normalizationDays) || 7;
 
     var sorted = [...state.weightEntries].sort((a, b) => a.date.localeCompare(b.date));
     if (sorted.length === 0) return [];
@@ -337,7 +339,7 @@
       var ds = toDateStr(d);
       if (weightIdx < sorted.length && sorted[weightIdx].date === ds) {
         var daysSinceReset = (d - lastResetDate) / 86400000;
-        if (weightIdx === 0 || daysSinceReset >= 7) {
+        if (weightIdx === 0 || daysSinceReset >= normDays) {
           currentWeight = sorted[weightIdx].weight;
           lastResetDate = new Date(d);
         }
@@ -384,7 +386,7 @@
       expectedEl.textContent = expectedInfo.expected.toFixed(1);
       const delta = expectedInfo.expected - expectedInfo.fromWeight;
       const sign = delta >= 0 ? '+' : '';
-      expectedSubEl.textContent = `${sign}${delta.toFixed(1)} lbs since ${formatDateShort(expectedInfo.fromDate)}`;
+      expectedSubEl.textContent = `${sign}${delta.toFixed(1)} lbs from ${expectedInfo.fromWeight.toFixed(1)} on ${formatDateShort(expectedInfo.fromDate)}`;
     } else {
       expectedEl.textContent = '—';
       expectedSubEl.textContent = '';
@@ -451,6 +453,7 @@
     document.getElementById('setting-cal-target').value = state.settings.dailyCalorieTarget ?? '';
     document.getElementById('setting-goal-weight').value = state.settings.goalWeight ?? '';
     document.getElementById('setting-tdee').value = state.settings.tdee ?? '';
+    document.getElementById('setting-norm-days').value = state.settings.normalizationDays ?? 7;
     const status = document.getElementById('settings-status');
     status.textContent = '';
     status.classList.remove('show');
@@ -920,9 +923,11 @@
       const cal = Number(document.getElementById('setting-cal-target').value);
       const goal = Number(document.getElementById('setting-goal-weight').value);
       const tdee = Number(document.getElementById('setting-tdee').value);
+      const normDays = Number(document.getElementById('setting-norm-days').value);
       if (Number.isFinite(cal) && cal >= 0) state.settings.dailyCalorieTarget = cal;
       if (Number.isFinite(goal) && goal >= 0) state.settings.goalWeight = goal;
       if (Number.isFinite(tdee) && tdee >= 0) state.settings.tdee = tdee;
+      if (Number.isFinite(normDays) && normDays >= 1) state.settings.normalizationDays = normDays;
       saveState();
       const status = document.getElementById('settings-status');
       status.textContent = 'Saved';
