@@ -3,29 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calorie Counter · Aaron Kahan</title>
-  <meta name="description" content="Local-only calorie and weight tracker. All data stays in your browser.">
+  <title>Health Tracker &middot; Aaron Kahan</title>
+  <meta name="description" content="Local-only calorie, weight, and workout tracker. All data stays in your browser.">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'self'; style-src 'self'; font-src 'self'; img-src 'self'; script-src 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../../style.css">
-  <link rel="stylesheet" href="caloriecounter.css">
+  <link rel="stylesheet" href="healthtracker.css">
 </head>
 <body>
   <div class="container">
     <div class="tool-header">
       <a href="../../" class="back-link">&larr; back</a>
-      <h1 class="tool-title">Calorie Counter</h1>
+      <h1 class="tool-title">Health Tracker</h1>
     </div>
 
     <nav class="cc-tabs" role="tablist" aria-label="Sections">
       <button type="button" class="cc-tab active" data-view="today" role="tab" aria-selected="true">Today</button>
       <button type="button" class="cc-tab" data-view="weight" role="tab" aria-selected="false">Weight</button>
       <button type="button" class="cc-tab" data-view="history" role="tab" aria-selected="false">History</button>
+      <button type="button" class="cc-tab" data-view="workouts" role="tab" aria-selected="false">Workouts</button>
       <button type="button" class="cc-tab" data-view="settings" role="tab" aria-selected="false">Settings</button>
     </nav>
 
-    <!-- ─── Today ─────────────────────────────────────────── -->
+    <!-- Today -->
     <section class="cc-view" id="view-today" role="tabpanel" aria-label="Today">
       <div class="cc-date-heading" id="today-date"></div>
 
@@ -41,6 +42,15 @@
             <div class="cc-summary-label">Remaining</div>
             <div class="cc-summary-value-sm" id="today-remaining">2000</div>
           </div>
+        </div>
+        <div class="cc-summary-burned" id="today-burned-row" hidden>
+          <span class="cc-summary-burned-label">Burned</span>
+          <span class="cc-summary-burned-value" id="today-burned">0</span>
+          <span class="cc-summary-burned-unit">kcal</span>
+          <span class="cc-summary-burned-sep">&middot;</span>
+          <span class="cc-summary-burned-label">Net</span>
+          <span class="cc-summary-burned-value" id="today-net">0</span>
+          <span class="cc-summary-burned-unit">kcal</span>
         </div>
         <svg class="cc-progress" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true">
           <rect class="cc-progress-bg" x="0" y="0" width="100" height="4"/>
@@ -65,21 +75,85 @@
       <ul class="cc-entry-list" id="today-list" aria-label="Today's entries"></ul>
     </section>
 
-    <!-- ─── Weight ────────────────────────────────────────── -->
+    <!-- Workouts -->
+    <section class="cc-view" id="view-workouts" role="tabpanel" aria-label="Workouts" hidden>
+
+      <!-- Home sub-view -->
+      <div id="workout-home">
+        <div class="cc-summary-card">
+          <div class="cc-summary-top">
+            <div>
+              <div class="cc-summary-label">This week</div>
+              <div class="cc-summary-value">
+                <span id="week-workout-count">0</span><span class="cc-summary-unit"> / <span id="week-workout-goal">3</span></span>
+              </div>
+            </div>
+          </div>
+          <svg class="cc-progress" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true">
+            <rect class="cc-progress-bg" x="0" y="0" width="100" height="4"/>
+            <rect class="cc-progress-fill" id="workout-progress" x="0" y="0" width="0" height="4"/>
+          </svg>
+        </div>
+
+        <div class="cc-section-header">
+          <h3 class="cc-subheading">Templates</h3>
+          <button type="button" class="cc-btn cc-btn-sm" id="new-template-btn">+ New Template</button>
+        </div>
+        <div id="workout-template-list"></div>
+
+        <h3 class="cc-subheading">Recent Workouts</h3>
+        <ul class="cc-history-list" id="workout-history-list" aria-label="Workout history"></ul>
+
+        <h3 class="cc-subheading">Progress</h3>
+        <div id="exercise-progress-list"></div>
+      </div>
+
+      <!-- Editor sub-view -->
+      <div id="workout-editor" hidden>
+        <button type="button" class="cc-btn cc-btn-sm cc-btn-back" id="editor-back-btn">&larr; Back</button>
+        <h3 class="cc-subheading" id="editor-title">New Template</h3>
+        <form id="template-form" autocomplete="off">
+          <div class="cc-setting">
+            <label for="template-name">Template name</label>
+            <input type="text" id="template-name" class="cc-input" placeholder="e.g. Workout A" required>
+          </div>
+          <div class="cc-setting">
+            <label for="template-calories">Calories burned (optional)</label>
+            <input type="number" id="template-calories" class="cc-input" placeholder="kcal" min="0" step="1" inputmode="numeric">
+          </div>
+          <div class="cc-exercise-labels">
+            <span class="cc-exercise-label cc-exercise-label-name">Exercise</span>
+            <span class="cc-exercise-label">Sets</span>
+            <span class="cc-exercise-label">Reps</span>
+            <span class="cc-exercise-label">Weight</span>
+            <span class="cc-exercise-label-spacer"></span>
+          </div>
+          <div id="template-exercises"></div>
+          <button type="button" class="cc-btn cc-btn-sm" id="add-exercise-btn">+ Add Exercise</button>
+          <div class="cc-setting-actions cc-template-actions">
+            <button type="submit" class="cc-btn cc-btn-primary">Save Template</button>
+            <button type="button" class="cc-btn cc-btn-danger" id="delete-template-btn" hidden>Delete</button>
+          </div>
+        </form>
+      </div>
+
+    </section>
+
+    <!-- Weight -->
     <section class="cc-view" id="view-weight" role="tabpanel" aria-label="Weight" hidden>
       <div class="cc-summary-card">
         <div class="cc-summary-top">
           <div>
             <div class="cc-summary-label">Current weight</div>
             <div class="cc-summary-value">
-              <span id="current-weight">—</span><span class="cc-summary-unit"> lbs</span>
+              <span id="current-weight">&mdash;</span><span class="cc-summary-unit"> lbs</span>
             </div>
             <div class="cc-summary-sub" id="current-weight-date"></div>
           </div>
           <div class="cc-summary-right">
             <div class="cc-summary-label">Goal</div>
             <div class="cc-summary-value-sm">
-              <span id="goal-weight-display">—</span>
+              <span id="goal-weight-display">&mdash;</span>
             </div>
             <div class="cc-summary-sub" id="weight-to-goal"></div>
           </div>
@@ -87,7 +161,7 @@
         <div class="cc-expected-row">
           <div class="cc-summary-label">Expected weight</div>
           <div class="cc-expected-value">
-            <span id="expected-weight">—</span><span class="cc-summary-unit"> lbs</span>
+            <span id="expected-weight">&mdash;</span><span class="cc-summary-unit"> lbs</span>
           </div>
           <div class="cc-summary-sub" id="expected-weight-sub"></div>
         </div>
@@ -106,7 +180,7 @@
       </div>
     </section>
 
-    <!-- ─── History ───────────────────────────────────────── -->
+    <!-- History -->
     <section class="cc-view" id="view-history" role="tabpanel" aria-label="History" hidden>
       <div class="cc-chart-wrap">
         <canvas id="calories-chart" width="680" height="280" aria-label="Daily calories chart"></canvas>
@@ -115,7 +189,7 @@
       <ul class="cc-history-list" id="history-list" aria-label="Past daily totals"></ul>
     </section>
 
-    <!-- ─── Settings ──────────────────────────────────────── -->
+    <!-- Settings -->
     <section class="cc-view" id="view-settings" role="tabpanel" aria-label="Settings" hidden>
       <form class="cc-form cc-settings-form" id="settings-form" autocomplete="off">
         <div class="cc-setting">
@@ -134,6 +208,14 @@
           <label for="setting-norm-days">Normalization window (days)</label>
           <input type="number" id="setting-norm-days" class="cc-input" min="1" max="30" step="1" inputmode="numeric" placeholder="7">
           <span class="cc-setting-hint">Minimum days between weigh-ins before the projection resets to your actual weight. Lower values follow your scale more closely; higher values rely more on calorie math.</span>
+        </div>
+        <div class="cc-setting">
+          <label for="setting-workout-goal">Weekly workout goal</label>
+          <input type="number" id="setting-workout-goal" class="cc-input" min="0" max="7" step="1" inputmode="numeric" placeholder="3">
+        </div>
+        <div class="cc-setting cc-setting-check">
+          <label><input type="checkbox" id="setting-subtract-burned" checked> Subtract workout calories from weight projection</label>
+          <span class="cc-setting-hint">When enabled, calories burned in workouts reduce your net intake for the expected weight calculation. Disable if your TDEE already accounts for exercise.</span>
         </div>
         <div class="cc-setting-actions">
           <button type="submit" class="cc-btn cc-btn-primary">Save</button>
@@ -155,11 +237,11 @@
     </section>
 
     <p class="tool-desc tool-desc-spaced">
-      A local-only calorie and weight tracker. Nothing is uploaded — everything lives in this browser's localStorage.
+      A local-only health tracker for calories, weight, and workouts. Nothing is uploaded &mdash; everything lives in this browser's localStorage.
       Use Export to back up your data.
     </p>
   </div>
 
-  <script src="caloriecounter.js"></script>
+  <script src="healthtracker.js"></script>
 </body>
 </html>
