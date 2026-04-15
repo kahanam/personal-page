@@ -276,6 +276,19 @@
       deltaRow.hidden = true;
     }
 
+    // Expected weight on Today tab
+    const todayExpectedRow = document.getElementById('today-expected-row');
+    const expectedInfo = calcExpectedWeight();
+    if (expectedInfo) {
+      todayExpectedRow.hidden = false;
+      document.getElementById('today-expected-weight').textContent = expectedInfo.expected.toFixed(1);
+      const eDelta = expectedInfo.expected - expectedInfo.fromWeight;
+      const eSign = eDelta >= 0 ? '+' : '';
+      document.getElementById('today-expected-sub').textContent = eSign + eDelta.toFixed(1) + ' lbs from ' + expectedInfo.fromWeight.toFixed(1) + ' on ' + formatDateShort(expectedInfo.fromDate);
+    } else {
+      todayExpectedRow.hidden = true;
+    }
+
     renderFrequentFoods();
 
     const list = document.getElementById('today-list');
