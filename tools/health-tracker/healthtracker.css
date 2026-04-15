@@ -544,6 +544,66 @@
   color: var(--accent2);
 }
 
+/* ─── Expandable history days ─────────────────────── */
+.cc-history-day {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cc-history-day > .cc-history-entry {
+  border: none;
+  border-radius: 0;
+}
+
+.cc-history-entry-toggle {
+  cursor: pointer;
+  user-select: none;
+  gap: 0.6rem;
+}
+
+.cc-history-toggle {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.cc-history-day.expanded .cc-history-toggle {
+  transform: rotate(90deg);
+}
+
+.cc-history-detail {
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  padding: 0.5rem 0.95rem 0.6rem;
+}
+
+.cc-history-food {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0 0.3rem 1.1rem;
+  font-size: 0.82rem;
+}
+
+.cc-history-food-name {
+  color: var(--text);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 0.8rem;
+}
+
+.cc-history-food-cal {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .cc-history-burned {
   color: var(--accent2);
   font-size: 0.75rem;

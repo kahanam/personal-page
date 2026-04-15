@@ -466,8 +466,16 @@
       var total = getTotalForDate(d);
       var burned = getBurnedForDate(d);
       var net = total - burned;
+      var entries = getEntriesForDate(d);
       var li = document.createElement('li');
-      li.className = 'cc-history-entry';
+      li.className = 'cc-history-day';
+
+      var header = document.createElement('div');
+      header.className = 'cc-history-entry cc-history-entry-toggle';
+
+      var toggle = document.createElement('span');
+      toggle.className = 'cc-history-toggle';
+      toggle.textContent = '\u25B6';
 
       var dateEl = document.createElement('span');
       dateEl.className = 'cc-history-date';
@@ -478,14 +486,46 @@
       if (target > 0 && net > target) calEl.classList.add('over');
       calEl.textContent = net.toLocaleString() + ' kcal';
 
+      header.append(toggle, dateEl, calEl);
+
       if (burned > 0) {
         var burnedEl = document.createElement('span');
         burnedEl.className = 'cc-history-burned';
         burnedEl.textContent = '-' + burned.toLocaleString();
-        li.append(dateEl, calEl, burnedEl);
-      } else {
-        li.append(dateEl, calEl);
+        header.appendChild(burnedEl);
       }
+
+      var detail = document.createElement('div');
+      detail.className = 'cc-history-detail';
+      detail.hidden = true;
+
+      entries.forEach(function (entry) {
+        var qty = entry.quantity || 1;
+        var row = document.createElement('div');
+        row.className = 'cc-history-food';
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'cc-history-food-name';
+        nameSpan.textContent = entry.name;
+        if (qty > 1) {
+          var qtyBadge = document.createElement('span');
+          qtyBadge.className = 'cc-entry-qty';
+          qtyBadge.textContent = '\u00d7' + qty;
+          nameSpan.appendChild(qtyBadge);
+        }
+        var calSpan = document.createElement('span');
+        calSpan.className = 'cc-history-food-cal';
+        calSpan.textContent = (entry.calories * qty).toLocaleString() + ' kcal';
+        row.append(nameSpan, calSpan);
+        detail.appendChild(row);
+      });
+
+      header.addEventListener('click', function () {
+        var open = !detail.hidden;
+        detail.hidden = open;
+        li.classList.toggle('expanded', !open);
+      });
+
+      li.append(header, detail);
       list.appendChild(li);
     });
   }
