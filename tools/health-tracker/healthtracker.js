@@ -5,10 +5,10 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'healthtracker.v1';
-  var LEGACY_STORAGE_KEY = 'caloriecounter.v1';
+  const STORAGE_KEY = 'healthtracker.v1';
+  const LEGACY_STORAGE_KEY = 'caloriecounter.v1';
 
-  var DEFAULT_STATE = {
+  const DEFAULT_STATE = {
     calorieEntries: [], // { id, date: 'YYYY-MM-DD', name, calories, quantity }
     weightEntries: [],  // { date: 'YYYY-MM-DD', weight }
     frequentFoods: [],  // { id, name, calories }
@@ -25,14 +25,14 @@
   };
 
   // ─── State ─────────────────────────────────────────
-  var state = loadState();
-  var currentView = 'today';
-  var workoutSubView = 'home'; // 'home' | 'editor'
-  var editingTemplateId = null; // null | 'new' | template id
+  let state = loadState();
+  let currentView = 'today';
+  let workoutSubView = 'home'; // 'home' | 'editor'
+  let editingTemplateId = null; // null | 'new' | template id
 
   function loadState() {
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
+      let raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
         raw = localStorage.getItem(LEGACY_STORAGE_KEY);
         if (raw) {
@@ -41,7 +41,7 @@
         }
       }
       if (!raw) return clone(DEFAULT_STATE);
-      var parsed = JSON.parse(raw);
+      const parsed = JSON.parse(raw);
       return normalizeState(parsed);
     } catch (err) {
       console.error('Failed to load state, resetting', err);
@@ -71,9 +71,9 @@
 
   // ─── Date helpers ──────────────────────────────────
   function toDateStr(d) {
-    var y = d.getFullYear();
-    var m = String(d.getMonth() + 1).padStart(2, '0');
-    var day = String(d.getDate()).padStart(2, '0');
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
     return y + '-' + m + '-' + day;
   }
 
@@ -82,7 +82,7 @@
   }
 
   function fromDateStr(str) {
-    var parts = str.split('-').map(Number);
+    const parts = str.split('-').map(Number);
     return new Date(parts[0], parts[1] - 1, parts[2]);
   }
 
@@ -104,17 +104,24 @@
     });
   }
 
+  function applyDelta(el, delta) {
+    const str = delta > 0 ? '+' + delta : String(delta);
+    el.className = 'cc-progress-delta';
+    el.classList.add(delta > 0 ? 'positive' : delta < 0 ? 'negative' : 'neutral');
+    el.textContent = str;
+  }
+
   function getWeekStart() {
-    var d = new Date();
-    var day = d.getDay();
-    var diff = day === 0 ? 6 : day - 1;
+    const d = new Date();
+    const day = d.getDay();
+    const diff = day === 0 ? 6 : day - 1;
     d.setDate(d.getDate() - diff);
     d.setHours(0, 0, 0, 0);
     return toDateStr(d);
   }
 
   function getWeekEnd() {
-    var start = fromDateStr(getWeekStart());
+    const start = fromDateStr(getWeekStart());
     start.setDate(start.getDate() + 6);
     return toDateStr(start);
   }
@@ -123,7 +130,7 @@
   function showView(name) {
     currentView = name;
     document.querySelectorAll('.cc-tab').forEach(function (tab) {
-      var active = tab.dataset.view === name;
+      const active = tab.dataset.view === name;
       tab.classList.toggle('active', active);
       tab.setAttribute('aria-selected', active ? 'true' : 'false');
     });
@@ -145,8 +152,8 @@
 
   // ─── Frequent foods ───────────────────────────────
   function renderFrequentFoods() {
-    var container = document.getElementById('frequent-foods');
-    var list = document.getElementById('frequent-list');
+    const container = document.getElementById('frequent-foods');
+    const list = document.getElementById('frequent-list');
     list.replaceChildren();
 
     if (state.frequentFoods.length === 0) {
@@ -155,22 +162,22 @@
     }
     container.hidden = false;
 
-    for (var i = 0; i < state.frequentFoods.length; i++) {
+    for (let i = 0; i < state.frequentFoods.length; i++) {
       (function (food) {
-        var chip = document.createElement('button');
+        const chip = document.createElement('button');
         chip.type = 'button';
         chip.className = 'cc-frequent-chip';
         chip.title = 'Add ' + food.name + ' (' + food.calories + ' kcal)';
 
-        var nameSpan = document.createElement('span');
+        const nameSpan = document.createElement('span');
         nameSpan.className = 'cc-frequent-chip-name';
         nameSpan.textContent = food.name;
 
-        var calSpan = document.createElement('span');
+        const calSpan = document.createElement('span');
         calSpan.className = 'cc-frequent-chip-cal';
         calSpan.textContent = food.calories;
 
-        var delBtn = document.createElement('span');
+        const delBtn = document.createElement('span');
         delBtn.className = 'cc-frequent-chip-del';
         delBtn.textContent = '\u00d7';
         delBtn.setAttribute('role', 'button');
@@ -218,20 +225,20 @@
   }
 
   function renderToday() {
-    var today = todayStr();
-    var entries = getEntriesForDate(today);
-    var total = getTotalForDate(today);
-    var burned = getBurnedForDate(today);
-    var target = Number(state.settings.dailyCalorieTarget) || 0;
-    var net = total - burned;
-    var remaining = target - net;
+    const today = todayStr();
+    const entries = getEntriesForDate(today);
+    const total = getTotalForDate(today);
+    const burned = getBurnedForDate(today);
+    const target = Number(state.settings.dailyCalorieTarget) || 0;
+    const net = total - burned;
+    const remaining = target - net;
 
     document.getElementById('today-date').textContent = formatDateLong(today);
     document.getElementById('today-total').textContent = total.toLocaleString();
     document.getElementById('today-target').textContent = target.toLocaleString();
 
-    var burnedRow = document.getElementById('today-burned-row');
-    var burnedEl = document.getElementById('today-burned');
+    const burnedRow = document.getElementById('today-burned-row');
+    const burnedEl = document.getElementById('today-burned');
     if (burned > 0) {
       burnedRow.hidden = false;
       burnedEl.textContent = burned.toLocaleString();
@@ -240,7 +247,7 @@
       burnedRow.hidden = true;
     }
 
-    var remainingEl = document.getElementById('today-remaining');
+    const remainingEl = document.getElementById('today-remaining');
     if (target <= 0) {
       remainingEl.textContent = '\u2014';
     } else if (remaining >= 0) {
@@ -249,19 +256,19 @@
       remainingEl.textContent = '+' + Math.abs(remaining).toLocaleString();
     }
 
-    var progressEl = document.getElementById('today-progress');
-    var pct = target > 0 ? Math.min(100, (net / target) * 100) : 0;
+    const progressEl = document.getElementById('today-progress');
+    const pct = target > 0 ? Math.min(100, (net / target) * 100) : 0;
     progressEl.setAttribute('width', String(pct));
     progressEl.classList.toggle('over', target > 0 && net > target);
 
     // Weight delta for today
-    var tdee = Number(state.settings.tdee);
-    var deltaRow = document.getElementById('today-weight-delta');
-    var deltaValEl = document.getElementById('today-weight-delta-value');
+    let tdee = Number(state.settings.tdee);
+    const deltaRow = document.getElementById('today-weight-delta');
+    const deltaValEl = document.getElementById('today-weight-delta-value');
     if (Number.isFinite(tdee) && tdee > 0 && total > 0) {
-      var todayNet = state.settings.subtractBurnedFromProjection !== false ? net : total;
-      var deltaLbs = (todayNet - tdee) / CAL_PER_LB;
-      var sign = deltaLbs >= 0 ? '+' : '';
+      const todayNet = state.settings.subtractBurnedFromProjection !== false ? net : total;
+      const deltaLbs = (todayNet - tdee) / CAL_PER_LB;
+      const sign = deltaLbs >= 0 ? '+' : '';
       deltaValEl.textContent = sign + deltaLbs.toFixed(2) + ' lbs';
       deltaValEl.className = 'cc-weight-delta-value ' + (deltaLbs > 0 ? 'gaining' : deltaLbs < 0 ? 'losing' : '');
       deltaRow.hidden = false;
@@ -271,35 +278,35 @@
 
     renderFrequentFoods();
 
-    var list = document.getElementById('today-list');
+    const list = document.getElementById('today-list');
     list.replaceChildren();
     if (entries.length === 0) {
-      var li = document.createElement('li');
+      const li = document.createElement('li');
       li.className = 'cc-empty';
       li.textContent = 'No entries yet. Add your first meal above.';
       list.appendChild(li);
       return;
     }
     entries.forEach(function (entry) {
-      var qty = entry.quantity || 1;
-      var li = document.createElement('li');
+      const qty = entry.quantity || 1;
+      const li = document.createElement('li');
       li.className = 'cc-entry';
 
-      var nameEl = document.createElement('span');
+      const nameEl = document.createElement('span');
       nameEl.className = 'cc-entry-name';
       nameEl.textContent = entry.name;
       if (qty > 1) {
-        var qtyBadge = document.createElement('span');
+        const qtyBadge = document.createElement('span');
         qtyBadge.className = 'cc-entry-qty';
         qtyBadge.textContent = '\u00d7' + qty;
         nameEl.appendChild(qtyBadge);
       }
 
-      var calEl = document.createElement('span');
+      const calEl = document.createElement('span');
       calEl.className = 'cc-entry-cal';
       calEl.textContent = (entry.calories * qty).toLocaleString() + ' kcal';
 
-      var addBtn = document.createElement('button');
+      const addBtn = document.createElement('button');
       addBtn.type = 'button';
       addBtn.className = 'cc-entry-add';
       addBtn.setAttribute('aria-label', 'Add another ' + entry.name);
@@ -310,7 +317,7 @@
         renderToday();
       });
 
-      var delBtn = document.createElement('button');
+      const delBtn = document.createElement('button');
       delBtn.type = 'button';
       delBtn.className = 'cc-entry-delete';
       delBtn.setAttribute('aria-label', 'Delete ' + entry.name);
@@ -327,36 +334,36 @@
   }
 
   // ─── Weight view ───────────────────────────────────
-  var CAL_PER_LB = 3500;
+  const CAL_PER_LB = 3500;
 
   function calcExpectedWeight() {
-    var tdee = Number(state.settings.tdee);
+    let tdee = Number(state.settings.tdee);
     if (!Number.isFinite(tdee) || tdee <= 0) return null;
-    var normDays = Number(state.settings.normalizationDays) || 7;
+    const normDays = Number(state.settings.normalizationDays) || 7;
 
-    var sorted = state.weightEntries.slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
+    const sorted = state.weightEntries.slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
     if (sorted.length === 0) return null;
 
-    var anchor = sorted[0];
-    for (var i = 1; i < sorted.length; i++) {
-      var daysSince = (fromDateStr(sorted[i].date) - fromDateStr(anchor.date)) / 86400000;
+    let anchor = sorted[0];
+    for (let i = 1; i < sorted.length; i++) {
+      const daysSince = (fromDateStr(sorted[i].date) - fromDateStr(anchor.date)) / 86400000;
       if (daysSince >= normDays) {
         anchor = sorted[i];
       }
     }
 
-    var startDate = fromDateStr(anchor.date);
-    var today = new Date();
+    const startDate = fromDateStr(anchor.date);
+    const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    var cumulative = 0;
-    var d = new Date(startDate);
+    let cumulative = 0;
+    const d = new Date(startDate);
     d.setDate(d.getDate() + 1);
     while (d <= today) {
-      var dateStr = toDateStr(d);
-      var entries = getEntriesForDate(dateStr);
-      var burned = state.settings.subtractBurnedFromProjection !== false ? getBurnedForDate(dateStr) : 0;
-      var eaten = entries.length > 0 ? getTotalForDate(dateStr) - burned : tdee;
+      const dateStr = toDateStr(d);
+      const entries = getEntriesForDate(dateStr);
+      const burned = state.settings.subtractBurnedFromProjection !== false ? getBurnedForDate(dateStr) : 0;
+      const eaten = entries.length > 0 ? getTotalForDate(dateStr) - burned : tdee;
       cumulative += eaten - tdee;
       d.setDate(d.getDate() + 1);
     }
@@ -369,34 +376,34 @@
   }
 
   function buildProjectedWeightSeries() {
-    var tdee = Number(state.settings.tdee);
+    let tdee = Number(state.settings.tdee);
     if (!Number.isFinite(tdee) || tdee <= 0) return [];
-    var normDays = Number(state.settings.normalizationDays) || 7;
+    const normDays = Number(state.settings.normalizationDays) || 7;
 
-    var sorted = state.weightEntries.slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
+    const sorted = state.weightEntries.slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
     if (sorted.length === 0) return [];
 
-    var today = todayStr();
-    var points = [];
-    var weightIdx = 0;
-    var currentWeight = sorted[0].weight;
-    var lastResetDate = fromDateStr(sorted[0].date);
-    var d = new Date(lastResetDate);
-    var end = fromDateStr(today);
+    const today = todayStr();
+    const points = [];
+    let weightIdx = 0;
+    let currentWeight = sorted[0].weight;
+    let lastResetDate = fromDateStr(sorted[0].date);
+    const d = new Date(lastResetDate);
+    const end = fromDateStr(today);
 
     while (d <= end) {
-      var ds = toDateStr(d);
+      const ds = toDateStr(d);
       if (weightIdx < sorted.length && sorted[weightIdx].date === ds) {
-        var daysSinceReset = (d - lastResetDate) / 86400000;
+        const daysSinceReset = (d - lastResetDate) / 86400000;
         if (weightIdx === 0 || daysSinceReset >= normDays) {
           currentWeight = sorted[weightIdx].weight;
           lastResetDate = new Date(d);
         }
         weightIdx++;
       } else {
-        var entries = getEntriesForDate(ds);
-        var burned = state.settings.subtractBurnedFromProjection !== false ? getBurnedForDate(ds) : 0;
-        var eaten = entries.length > 0 ? getTotalForDate(ds) - burned : tdee;
+        const entries = getEntriesForDate(ds);
+        const burned = state.settings.subtractBurnedFromProjection !== false ? getBurnedForDate(ds) : 0;
+        const eaten = entries.length > 0 ? getTotalForDate(ds) - burned : tdee;
         currentWeight += (eaten - tdee) / CAL_PER_LB;
       }
       points.push({ date: ds, weight: currentWeight });
@@ -406,23 +413,23 @@
   }
 
   function renderWeight() {
-    var sorted = state.weightEntries.slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
-    var current = sorted[sorted.length - 1];
-    var goal = Number(state.settings.goalWeight);
-    var hasGoal = Number.isFinite(goal) && goal > 0;
+    const sorted = state.weightEntries.slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
+    const current = sorted[sorted.length - 1];
+    const goal = Number(state.settings.goalWeight);
+    const hasGoal = Number.isFinite(goal) && goal > 0;
 
-    var currentEl = document.getElementById('current-weight');
-    var goalEl = document.getElementById('goal-weight-display');
-    var toGoalEl = document.getElementById('weight-to-goal');
+    const currentEl = document.getElementById('current-weight');
+    const goalEl = document.getElementById('goal-weight-display');
+    const toGoalEl = document.getElementById('weight-to-goal');
 
     currentEl.textContent = current ? current.weight.toFixed(1) : '\u2014';
-    var currentDateEl = document.getElementById('current-weight-date');
+    const currentDateEl = document.getElementById('current-weight-date');
     currentDateEl.textContent = current ? formatDateShort(current.date) : '';
     goalEl.textContent = hasGoal ? goal.toFixed(1) + ' lbs' : '\u2014';
 
     if (current && hasGoal) {
-      var diff = current.weight - goal;
-      var abs = Math.abs(diff).toFixed(1);
+      const diff = current.weight - goal;
+      const abs = Math.abs(diff).toFixed(1);
       if (diff > 0.05)       toGoalEl.textContent = abs + ' lbs to lose';
       else if (diff < -0.05) toGoalEl.textContent = abs + ' lbs to gain';
       else                   toGoalEl.textContent = 'at goal';
@@ -430,73 +437,73 @@
       toGoalEl.textContent = '';
     }
 
-    var expectedEl = document.getElementById('expected-weight');
-    var expectedSubEl = document.getElementById('expected-weight-sub');
-    var expectedInfo = calcExpectedWeight();
+    const expectedEl = document.getElementById('expected-weight');
+    const expectedSubEl = document.getElementById('expected-weight-sub');
+    const expectedInfo = calcExpectedWeight();
     if (expectedInfo) {
       expectedEl.textContent = expectedInfo.expected.toFixed(1);
-      var delta = expectedInfo.expected - expectedInfo.fromWeight;
-      var sign = delta >= 0 ? '+' : '';
+      const delta = expectedInfo.expected - expectedInfo.fromWeight;
+      const sign = delta >= 0 ? '+' : '';
       expectedSubEl.textContent = sign + delta.toFixed(1) + ' lbs from ' + expectedInfo.fromWeight.toFixed(1) + ' on ' + formatDateShort(expectedInfo.fromDate);
     } else {
       expectedEl.textContent = '\u2014';
       expectedSubEl.textContent = '';
     }
 
-    var dateInput = document.getElementById('weight-date');
+    const dateInput = document.getElementById('weight-date');
     if (!dateInput.value) dateInput.value = todayStr();
 
-    var projected = buildProjectedWeightSeries();
+    const projected = buildProjectedWeightSeries();
     drawWeightChart(sorted, hasGoal ? goal : null, projected);
   }
 
   // ─── History view ──────────────────────────────────
   function renderHistory() {
-    var days = [];
-    var totals = [];
-    var today = new Date();
-    for (var i = 13; i >= 0; i--) {
-      var d = new Date(today);
+    const days = [];
+    const totals = [];
+    const today = new Date();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today);
       d.setDate(d.getDate() - i);
-      var str = toDateStr(d);
+      const str = toDateStr(d);
       days.push(str);
       totals.push(Math.max(0, getTotalForDate(str) - getBurnedForDate(str)));
     }
     drawCaloriesChart(days, totals, Number(state.settings.dailyCalorieTarget) || 0);
 
-    var dateSet = new Set(state.calorieEntries.map(function (e) { return e.date; }));
-    var dates = Array.from(dateSet).sort(function (a, b) { return b.localeCompare(a); });
+    const dateSet = new Set(state.calorieEntries.map(function (e) { return e.date; }));
+    const dates = Array.from(dateSet).sort(function (a, b) { return b.localeCompare(a); });
 
-    var list = document.getElementById('history-list');
+    const list = document.getElementById('history-list');
     list.replaceChildren();
     if (dates.length === 0) {
-      var li = document.createElement('li');
+      const li = document.createElement('li');
       li.className = 'cc-empty';
       li.textContent = 'No history yet.';
       list.appendChild(li);
       return;
     }
-    var target = Number(state.settings.dailyCalorieTarget) || 0;
+    const target = Number(state.settings.dailyCalorieTarget) || 0;
     dates.forEach(function (d) {
-      var total = getTotalForDate(d);
-      var burned = getBurnedForDate(d);
-      var net = total - burned;
-      var entries = getEntriesForDate(d);
-      var li = document.createElement('li');
+      const total = getTotalForDate(d);
+      const burned = getBurnedForDate(d);
+      const net = total - burned;
+      const entries = getEntriesForDate(d);
+      const li = document.createElement('li');
       li.className = 'cc-history-day';
 
-      var header = document.createElement('div');
+      const header = document.createElement('div');
       header.className = 'cc-history-entry cc-history-entry-toggle';
 
-      var toggle = document.createElement('span');
+      const toggle = document.createElement('span');
       toggle.className = 'cc-history-toggle';
       toggle.textContent = '\u25B6';
 
-      var dateEl = document.createElement('span');
+      const dateEl = document.createElement('span');
       dateEl.className = 'cc-history-date';
       dateEl.textContent = formatDateMedium(d);
 
-      var calEl = document.createElement('span');
+      const calEl = document.createElement('span');
       calEl.className = 'cc-history-cal';
       if (target > 0 && net > target) calEl.classList.add('over');
       calEl.textContent = net.toLocaleString() + ' kcal';
@@ -504,30 +511,30 @@
       header.append(toggle, dateEl, calEl);
 
       if (burned > 0) {
-        var burnedEl = document.createElement('span');
+        const burnedEl = document.createElement('span');
         burnedEl.className = 'cc-history-burned';
         burnedEl.textContent = '-' + burned.toLocaleString();
         header.appendChild(burnedEl);
       }
 
-      var detail = document.createElement('div');
+      const detail = document.createElement('div');
       detail.className = 'cc-history-detail';
       detail.hidden = true;
 
       entries.forEach(function (entry) {
-        var qty = entry.quantity || 1;
-        var row = document.createElement('div');
+        const qty = entry.quantity || 1;
+        const row = document.createElement('div');
         row.className = 'cc-history-food';
-        var nameSpan = document.createElement('span');
+        const nameSpan = document.createElement('span');
         nameSpan.className = 'cc-history-food-name';
         nameSpan.textContent = entry.name;
         if (qty > 1) {
-          var qtyBadge = document.createElement('span');
+          const qtyBadge = document.createElement('span');
           qtyBadge.className = 'cc-entry-qty';
           qtyBadge.textContent = '\u00d7' + qty;
           nameSpan.appendChild(qtyBadge);
         }
-        var calSpan = document.createElement('span');
+        const calSpan = document.createElement('span');
         calSpan.className = 'cc-history-food-cal';
         calSpan.textContent = (entry.calories * qty).toLocaleString() + ' kcal';
         row.append(nameSpan, calSpan);
@@ -535,7 +542,7 @@
       });
 
       header.addEventListener('click', function () {
-        var open = !detail.hidden;
+        const open = !detail.hidden;
         detail.hidden = open;
         li.classList.toggle('expanded', !open);
       });
@@ -547,8 +554,8 @@
 
   // ─── Workouts view ─────────────────────────────────
   function renderWorkouts() {
-    var home = document.getElementById('workout-home');
-    var editor = document.getElementById('workout-editor');
+    const home = document.getElementById('workout-home');
+    const editor = document.getElementById('workout-editor');
 
     home.hidden = workoutSubView !== 'home';
     editor.hidden = workoutSubView !== 'editor';
@@ -561,63 +568,63 @@
 
   function renderWorkoutHome() {
     // Weekly summary
-    var weekStart = getWeekStart();
-    var weekEnd = getWeekEnd();
-    var weekWorkouts = state.workoutLogs.filter(function (l) {
+    const weekStart = getWeekStart();
+    const weekEnd = getWeekEnd();
+    const weekWorkouts = state.workoutLogs.filter(function (l) {
       return l.date >= weekStart && l.date <= weekEnd;
     });
-    var goal = Number(state.settings.weeklyWorkoutGoal) || 3;
+    const goal = Number(state.settings.weeklyWorkoutGoal) || 3;
 
     document.getElementById('week-workout-count').textContent = weekWorkouts.length;
     document.getElementById('week-workout-goal').textContent = goal;
 
-    var progressEl = document.getElementById('workout-progress');
-    var pct = goal > 0 ? Math.min(100, (weekWorkouts.length / goal) * 100) : 0;
+    const progressEl = document.getElementById('workout-progress');
+    const pct = goal > 0 ? Math.min(100, (weekWorkouts.length / goal) * 100) : 0;
     progressEl.setAttribute('width', String(pct));
     progressEl.classList.toggle('complete', weekWorkouts.length >= goal && goal > 0);
 
     // Template list
-    var templateList = document.getElementById('workout-template-list');
+    const templateList = document.getElementById('workout-template-list');
     templateList.replaceChildren();
 
     if (state.workoutTemplates.length === 0) {
-      var empty = document.createElement('div');
+      const empty = document.createElement('div');
       empty.className = 'cc-empty';
       empty.textContent = 'No templates yet. Create one to get started.';
       templateList.appendChild(empty);
     } else {
-      var grid = document.createElement('div');
+      const grid = document.createElement('div');
       grid.className = 'cc-template-grid';
 
       state.workoutTemplates.forEach(function (template) {
-        var card = document.createElement('div');
+        const card = document.createElement('div');
         card.className = 'cc-template-card';
 
-        var info = document.createElement('div');
+        const info = document.createElement('div');
         info.className = 'cc-template-card-info';
 
-        var name = document.createElement('div');
+        let name = document.createElement('div');
         name.className = 'cc-template-card-name';
         name.textContent = template.name;
 
-        var desc = document.createElement('div');
+        const desc = document.createElement('div');
         desc.className = 'cc-template-card-desc';
-        var descText = template.exercises.map(function (e) { return e.name; }).join(' \u00b7 ');
+        let descText = template.exercises.map(function (e) { return e.name; }).join(' \u00b7 ');
         if (template.caloriesBurned) descText += ' \u00b7 -' + template.caloriesBurned + ' kcal';
         desc.textContent = descText;
 
         info.append(name, desc);
 
-        var actions = document.createElement('div');
+        const actions = document.createElement('div');
         actions.className = 'cc-template-card-actions';
 
-        var logBtn = document.createElement('button');
+        const logBtn = document.createElement('button');
         logBtn.type = 'button';
         logBtn.className = 'cc-btn cc-btn-primary cc-btn-sm';
         logBtn.textContent = 'Log';
         logBtn.addEventListener('click', function () { logWorkout(template); });
 
-        var editBtn = document.createElement('button');
+        const editBtn = document.createElement('button');
         editBtn.type = 'button';
         editBtn.className = 'cc-btn cc-btn-sm';
         editBtn.textContent = 'Edit';
@@ -636,13 +643,13 @@
     }
 
     // History
-    var historyList = document.getElementById('workout-history-list');
+    const historyList = document.getElementById('workout-history-list');
     historyList.replaceChildren();
 
-    var sortedLogs = state.workoutLogs.slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
+    const sortedLogs = state.workoutLogs.slice().sort(function (a, b) { return b.date.localeCompare(a.date); });
 
     if (sortedLogs.length === 0) {
-      var emptyLi = document.createElement('li');
+      const emptyLi = document.createElement('li');
       emptyLi.className = 'cc-empty';
       emptyLi.textContent = 'No workouts logged yet.';
       historyList.appendChild(emptyLi);
@@ -656,61 +663,80 @@
   }
 
   function createWorkoutLogEntry(log) {
-    var li = document.createElement('li');
+    const li = document.createElement('li');
     li.className = 'cc-workout-log-entry';
 
-    var header = document.createElement('div');
+    const header = document.createElement('div');
     header.className = 'cc-workout-log-header';
 
-    var dateEl = document.createElement('span');
+    const dateEl = document.createElement('span');
     dateEl.className = 'cc-workout-log-date';
     dateEl.textContent = formatDateMedium(log.date);
 
-    var nameEl = document.createElement('span');
+    const nameEl = document.createElement('span');
     nameEl.className = 'cc-workout-log-name';
     nameEl.textContent = log.templateName;
 
-    var totalSets = log.exercises.reduce(function (sum, ex) { return sum + ex.sets.length; }, 0);
-    var summaryEl = document.createElement('span');
+    let totalSets = 0;
+    let cardioCount = 0;
+    log.exercises.forEach(function (ex) {
+      if (ex.type === 'cardio') { cardioCount++; }
+      else if (ex.sets) { totalSets += ex.sets.length; }
+    });
+    const summaryEl = document.createElement('span');
     summaryEl.className = 'cc-workout-log-summary';
-    var summaryText = log.exercises.length + ' ex \u00b7 ' + totalSets + ' sets';
-    if (log.caloriesBurned) summaryText += ' \u00b7 -' + log.caloriesBurned + ' kcal';
+    const parts = [];
+    if (log.exercises.length - cardioCount > 0) parts.push((log.exercises.length - cardioCount) + ' ex');
+    if (totalSets > 0) parts.push(totalSets + ' sets');
+    if (cardioCount > 0) parts.push(cardioCount + ' cardio');
+    if (log.caloriesBurned) parts.push('-' + log.caloriesBurned + ' kcal');
+    const summaryText = parts.join(' \u00b7 ');
     summaryEl.textContent = summaryText;
 
-    var toggleEl = document.createElement('span');
+    const toggleEl = document.createElement('span');
     toggleEl.className = 'cc-workout-log-toggle';
     toggleEl.textContent = '\u25b6';
 
     header.append(dateEl, nameEl, summaryEl, toggleEl);
 
-    var detail = document.createElement('div');
+    const detail = document.createElement('div');
     detail.className = 'cc-workout-log-detail';
     detail.hidden = true;
 
     log.exercises.forEach(function (exercise) {
-      var exDiv = document.createElement('div');
+      const exDiv = document.createElement('div');
       exDiv.className = 'cc-workout-log-exercise';
 
-      var exName = document.createElement('div');
+      const exName = document.createElement('div');
       exName.className = 'cc-workout-log-exercise-name';
       exName.textContent = exercise.name;
 
       exDiv.appendChild(exName);
 
-      exercise.sets.forEach(function (set, si) {
-        var setEl = document.createElement('div');
-        setEl.className = 'cc-workout-log-set';
-        setEl.textContent = 'Set ' + (si + 1) + ': ' + set.weight + ' lbs \u00d7 ' + set.reps + ' reps';
-        exDiv.appendChild(setEl);
-      });
+      if (exercise.type === 'cardio') {
+        const cardioEl = document.createElement('div');
+        cardioEl.className = 'cc-workout-log-set';
+        const cardioParts = [];
+        if (exercise.duration) cardioParts.push(exercise.duration + ' min');
+        if (exercise.distance) cardioParts.push(exercise.distance + ' mi');
+        cardioEl.textContent = cardioParts.join(' \u00b7 ') || 'Logged';
+        exDiv.appendChild(cardioEl);
+      } else if (exercise.sets) {
+        exercise.sets.forEach(function (set, si) {
+          const setEl = document.createElement('div');
+          setEl.className = 'cc-workout-log-set';
+          setEl.textContent = 'Set ' + (si + 1) + ': ' + set.weight + ' lbs \u00d7 ' + set.reps + ' reps';
+          exDiv.appendChild(setEl);
+        });
+      }
 
       detail.appendChild(exDiv);
     });
 
     // Delete button inside detail
-    var actionsDiv = document.createElement('div');
+    const actionsDiv = document.createElement('div');
     actionsDiv.className = 'cc-workout-log-actions';
-    var delBtn = document.createElement('button');
+    const delBtn = document.createElement('button');
     delBtn.type = 'button';
     delBtn.className = 'cc-btn cc-btn-sm cc-btn-danger';
     delBtn.textContent = 'Delete';
@@ -735,102 +761,135 @@
 
   // ─── Exercise progress ─────────────────────────────
   function renderExerciseProgress() {
-    var container = document.getElementById('exercise-progress-list');
+    const container = document.getElementById('exercise-progress-list');
     container.replaceChildren();
 
-    var sortedLogs = state.workoutLogs.slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
+    const sortedLogs = state.workoutLogs.slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
 
     // Group by exercise name, preserving first-appearance order
-    var exerciseNames = [];
-    var exerciseHistory = {};
+    const exerciseNames = [];
+    const exerciseHistory = {};
 
     sortedLogs.forEach(function (log) {
       log.exercises.forEach(function (ex) {
         if (!exerciseHistory[ex.name]) {
-          exerciseHistory[ex.name] = [];
+          exerciseHistory[ex.name] = { type: ex.type || 'strength', entries: [] };
           exerciseNames.push(ex.name);
         }
-        var maxWeight = 0;
-        ex.sets.forEach(function (s) { if (s.weight > maxWeight) maxWeight = s.weight; });
-        exerciseHistory[ex.name].push({
-          date: log.date,
-          weight: maxWeight,
-          sets: ex.sets.length,
-          reps: ex.sets[0] ? ex.sets[0].reps : 0
-        });
+        if (ex.type === 'cardio') {
+          exerciseHistory[ex.name].entries.push({
+            date: log.date,
+            duration: ex.duration || 0,
+            distance: ex.distance || 0
+          });
+        } else {
+          let maxWeight = 0;
+          if (ex.sets) ex.sets.forEach(function (s) { if (s.weight > maxWeight) maxWeight = s.weight; });
+          exerciseHistory[ex.name].entries.push({
+            date: log.date,
+            weight: maxWeight,
+            sets: ex.sets ? ex.sets.length : 0,
+            reps: ex.sets && ex.sets[0] ? ex.sets[0].reps : 0
+          });
+        }
       });
     });
 
     if (exerciseNames.length === 0) {
-      var empty = document.createElement('div');
+      const empty = document.createElement('div');
       empty.className = 'cc-empty';
       empty.textContent = 'Log workouts to track progress.';
       container.appendChild(empty);
       return;
     }
 
-    var list = document.createElement('ul');
+    const list = document.createElement('ul');
     list.className = 'cc-history-list';
 
     exerciseNames.forEach(function (name) {
-      var history = exerciseHistory[name];
-      var first = history[0];
-      var last = history[history.length - 1];
-      var delta = last.weight - first.weight;
+      const exData = exerciseHistory[name];
+      const isCardio = exData.type === 'cardio';
+      const history = exData.entries;
+      const first = history[0];
+      const last = history[history.length - 1];
 
-      var li = document.createElement('li');
+      const li = document.createElement('li');
       li.className = 'cc-workout-log-entry';
 
-      var header = document.createElement('div');
+      const header = document.createElement('div');
       header.className = 'cc-workout-log-header';
 
-      var nameEl = document.createElement('span');
+      const nameEl = document.createElement('span');
       nameEl.className = 'cc-workout-log-name';
       nameEl.textContent = name;
 
-      var progressEl = document.createElement('span');
+      const progressEl = document.createElement('span');
       progressEl.className = 'cc-progress-summary';
-      if (history.length === 1) {
-        progressEl.textContent = last.weight + ' lbs';
+
+      const deltaEl = document.createElement('span');
+
+      if (isCardio) {
+        if (history.length === 1) {
+          const parts = [];
+          if (last.distance) parts.push(last.distance + ' mi');
+          if (last.duration) parts.push(last.duration + ' min');
+          progressEl.textContent = parts.join(' \u00b7 ') || 'Logged';
+        } else {
+          if (last.distance && first.distance) {
+            progressEl.textContent = first.distance + ' \u2192 ' + last.distance + ' mi';
+            applyDelta(deltaEl, last.distance - first.distance);
+          } else if (last.duration && first.duration) {
+            progressEl.textContent = first.duration + ' \u2192 ' + last.duration + ' min';
+            applyDelta(deltaEl, last.duration - first.duration);
+          } else {
+            progressEl.textContent = history.length + ' sessions';
+          }
+        }
       } else {
-        progressEl.textContent = first.weight + ' \u2192 ' + last.weight + ' lbs';
+        const delta = last.weight - first.weight;
+        if (history.length === 1) {
+          progressEl.textContent = last.weight + ' lbs';
+        } else {
+          progressEl.textContent = first.weight + ' \u2192 ' + last.weight + ' lbs';
+        }
+        if (history.length > 1) {
+          applyDelta(deltaEl, delta);
+        }
       }
 
-      var deltaEl = document.createElement('span');
-      if (history.length > 1) {
-        var deltaStr = delta > 0 ? '+' + delta : String(delta);
-        deltaEl.className = 'cc-progress-delta';
-        deltaEl.classList.add(delta > 0 ? 'positive' : delta < 0 ? 'negative' : 'neutral');
-        deltaEl.textContent = deltaStr;
-      }
-
-      var toggleEl = document.createElement('span');
+      const toggleEl = document.createElement('span');
       toggleEl.className = 'cc-workout-log-toggle';
       toggleEl.textContent = '\u25b6';
 
       header.append(nameEl, progressEl, deltaEl, toggleEl);
 
-      var detail = document.createElement('div');
+      const detail = document.createElement('div');
       detail.className = 'cc-workout-log-detail';
       detail.hidden = true;
 
       history.slice().reverse().forEach(function (entry) {
-        var row = document.createElement('div');
+        const row = document.createElement('div');
         row.className = 'cc-progress-row';
 
-        var dateEl = document.createElement('span');
+        const dateEl = document.createElement('span');
         dateEl.className = 'cc-progress-date';
         dateEl.textContent = formatDateMedium(entry.date);
 
-        var weightEl = document.createElement('span');
-        weightEl.className = 'cc-progress-weight';
-        weightEl.textContent = entry.weight + ' lbs';
+        const valEl = document.createElement('span');
+        valEl.className = 'cc-progress-weight';
 
-        var detailEl = document.createElement('span');
+        const detailEl = document.createElement('span');
         detailEl.className = 'cc-progress-detail';
-        detailEl.textContent = entry.sets + '\u00d7' + entry.reps;
 
-        row.append(dateEl, weightEl, detailEl);
+        if (isCardio) {
+          valEl.textContent = entry.distance ? entry.distance + ' mi' : '';
+          detailEl.textContent = entry.duration ? entry.duration + ' min' : '';
+        } else {
+          valEl.textContent = entry.weight + ' lbs';
+          detailEl.textContent = entry.sets + '\u00d7' + entry.reps;
+        }
+
+        row.append(dateEl, valEl, detailEl);
         detail.appendChild(row);
       });
 
@@ -848,7 +907,7 @@
 
   // ─── Workout editor ────────────────────────────────
   function renderWorkoutEditor() {
-    var template = editingTemplateId && editingTemplateId !== 'new'
+    const template = editingTemplateId && editingTemplateId !== 'new'
       ? state.workoutTemplates.find(function (t) { return t.id === editingTemplateId; })
       : null;
 
@@ -857,7 +916,7 @@
     document.getElementById('template-calories').value = template && template.caloriesBurned ? template.caloriesBurned : '';
     document.getElementById('delete-template-btn').hidden = !template;
 
-    var container = document.getElementById('template-exercises');
+    const container = document.getElementById('template-exercises');
     container.replaceChildren();
 
     if (template) {
@@ -870,38 +929,52 @@
   }
 
   function createExerciseRow(exercise) {
-    var row = document.createElement('div');
+    const row = document.createElement('div');
     row.className = 'cc-exercise-row';
 
-    var nameInput = document.createElement('input');
+    let type = exercise ? (exercise.type || 'strength') : 'strength';
+
+    const typeSelect = document.createElement('select');
+    typeSelect.className = 'cc-input cc-input-type';
+    typeSelect.dataset.field = 'type';
+    const optStrength = document.createElement('option');
+    optStrength.value = 'strength';
+    optStrength.textContent = 'Strength';
+    const optCardio = document.createElement('option');
+    optCardio.value = 'cardio';
+    optCardio.textContent = 'Cardio';
+    typeSelect.append(optStrength, optCardio);
+    typeSelect.value = type;
+
+    const nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.className = 'cc-input cc-input-grow';
-    nameInput.placeholder = 'Exercise name';
+    nameInput.placeholder = type === 'cardio' ? 'e.g. Walk, Run' : 'Exercise name';
     nameInput.value = exercise ? exercise.name : '';
     nameInput.dataset.field = 'name';
 
-    var setsInput = document.createElement('input');
+    const setsInput = document.createElement('input');
     setsInput.type = 'number';
-    setsInput.className = 'cc-input cc-input-sm';
+    setsInput.className = 'cc-input cc-input-sm cc-strength-field';
     setsInput.placeholder = 'Sets';
-    setsInput.value = exercise ? exercise.sets : 3;
+    setsInput.value = exercise && type === 'strength' ? exercise.sets : '';
     setsInput.min = '1';
     setsInput.max = '20';
     setsInput.inputMode = 'numeric';
     setsInput.dataset.field = 'sets';
 
-    var repsInput = document.createElement('input');
+    const repsInput = document.createElement('input');
     repsInput.type = 'number';
-    repsInput.className = 'cc-input cc-input-sm';
+    repsInput.className = 'cc-input cc-input-sm cc-strength-field';
     repsInput.placeholder = 'Reps';
-    repsInput.value = exercise ? exercise.reps : 5;
+    repsInput.value = exercise && type === 'strength' ? exercise.reps : '';
     repsInput.min = '1';
     repsInput.inputMode = 'numeric';
     repsInput.dataset.field = 'reps';
 
-    var weightInput = document.createElement('input');
+    const weightInput = document.createElement('input');
     weightInput.type = 'number';
-    weightInput.className = 'cc-input cc-input-sm';
+    weightInput.className = 'cc-input cc-input-sm cc-strength-field';
     weightInput.placeholder = 'lbs';
     weightInput.value = exercise && exercise.weight ? exercise.weight : '';
     weightInput.min = '0';
@@ -909,33 +982,77 @@
     weightInput.inputMode = 'decimal';
     weightInput.dataset.field = 'weight';
 
-    var delBtn = document.createElement('button');
+    const durationInput = document.createElement('input');
+    durationInput.type = 'number';
+    durationInput.className = 'cc-input cc-input-sm cc-cardio-field';
+    durationInput.placeholder = 'Min';
+    durationInput.value = exercise && exercise.duration ? exercise.duration : '';
+    durationInput.min = '0';
+    durationInput.inputMode = 'numeric';
+    durationInput.dataset.field = 'duration';
+
+    const distanceInput = document.createElement('input');
+    distanceInput.type = 'number';
+    distanceInput.className = 'cc-input cc-input-sm cc-cardio-field';
+    distanceInput.placeholder = 'Miles';
+    distanceInput.value = exercise && exercise.distance ? exercise.distance : '';
+    distanceInput.min = '0';
+    distanceInput.step = '0.1';
+    distanceInput.inputMode = 'decimal';
+    distanceInput.dataset.field = 'distance';
+
+    function updateFieldVisibility() {
+      const isCardio = typeSelect.value === 'cardio';
+      setsInput.hidden = isCardio;
+      repsInput.hidden = isCardio;
+      weightInput.hidden = isCardio;
+      durationInput.hidden = !isCardio;
+      distanceInput.hidden = !isCardio;
+      nameInput.placeholder = isCardio ? 'e.g. Walk, Run' : 'Exercise name';
+    }
+
+    typeSelect.addEventListener('change', updateFieldVisibility);
+    updateFieldVisibility();
+
+    const delBtn = document.createElement('button');
     delBtn.type = 'button';
     delBtn.className = 'cc-entry-delete';
     delBtn.textContent = '\u00d7';
     delBtn.setAttribute('aria-label', 'Remove exercise');
     delBtn.addEventListener('click', function () { row.remove(); });
 
-    row.append(nameInput, setsInput, repsInput, weightInput, delBtn);
+    row.append(typeSelect, nameInput, setsInput, repsInput, weightInput, durationInput, distanceInput, delBtn);
     return row;
   }
 
   function saveTemplate() {
-    var name = document.getElementById('template-name').value.trim();
+    let name = document.getElementById('template-name').value.trim();
     if (!name) return;
-    var calories = Number(document.getElementById('template-calories').value) || 0;
+    const calories = Number(document.getElementById('template-calories').value) || 0;
 
-    var rows = document.querySelectorAll('#template-exercises .cc-exercise-row');
-    var exercises = [];
+    const rows = document.querySelectorAll('#template-exercises .cc-exercise-row');
+    let exercises = [];
     rows.forEach(function (row) {
-      var exName = row.querySelector('[data-field="name"]').value.trim();
-      var sets = Number(row.querySelector('[data-field="sets"]').value) || 3;
-      var reps = Number(row.querySelector('[data-field="reps"]').value) || 5;
-      var weight = Number(row.querySelector('[data-field="weight"]').value) || 0;
-      if (exName) {
+      const exName = row.querySelector('[data-field="name"]').value.trim();
+      const exType = row.querySelector('[data-field="type"]').value;
+      if (!exName) return;
+
+      if (exType === 'cardio') {
         exercises.push({
           id: crypto.randomUUID(),
           name: exName,
+          type: 'cardio',
+          duration: Math.max(0, Number(row.querySelector('[data-field="duration"]').value) || 0),
+          distance: Math.max(0, Number(row.querySelector('[data-field="distance"]').value) || 0)
+        });
+      } else {
+        const sets = Number(row.querySelector('[data-field="sets"]').value) || 1;
+        const reps = Number(row.querySelector('[data-field="reps"]').value) || 1;
+        const weight = Number(row.querySelector('[data-field="weight"]').value) || 0;
+        exercises.push({
+          id: crypto.randomUUID(),
+          name: exName,
+          type: 'strength',
           sets: Math.max(1, sets),
           reps: Math.max(1, reps),
           weight: Math.max(0, weight)
@@ -946,7 +1063,7 @@
     if (exercises.length === 0) return;
 
     if (editingTemplateId && editingTemplateId !== 'new') {
-      var template = state.workoutTemplates.find(function (t) { return t.id === editingTemplateId; });
+      const template = state.workoutTemplates.find(function (t) { return t.id === editingTemplateId; });
       if (template) {
         template.name = name;
         template.caloriesBurned = calories;
@@ -986,8 +1103,17 @@
       templateName: template.name,
       caloriesBurned: template.caloriesBurned || 0,
       exercises: template.exercises.map(function (ex) {
+        if (ex.type === 'cardio') {
+          return {
+            name: ex.name,
+            type: 'cardio',
+            duration: ex.duration,
+            distance: ex.distance
+          };
+        }
         return {
           name: ex.name,
+          type: 'strength',
           sets: Array.from({ length: ex.sets }, function () {
             return { weight: ex.weight, reps: ex.reps };
           })
@@ -1006,25 +1132,25 @@
     document.getElementById('setting-norm-days').value = state.settings.normalizationDays != null ? state.settings.normalizationDays : 7;
     document.getElementById('setting-workout-goal').value = state.settings.weeklyWorkoutGoal != null ? state.settings.weeklyWorkoutGoal : 3;
     document.getElementById('setting-subtract-burned').checked = state.settings.subtractBurnedFromProjection !== false;
-    var status = document.getElementById('settings-status');
+    const status = document.getElementById('settings-status');
     status.textContent = '';
     status.classList.remove('show');
   }
 
   // ─── Canvas charts ─────────────────────────────────
   function prepareCanvas(canvas) {
-    var dpr = window.devicePixelRatio || 1;
-    var rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
     canvas.width = Math.max(1, Math.round(rect.width * dpr));
     canvas.height = Math.max(1, Math.round(rect.height * dpr));
-    var ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     return { ctx: ctx, w: rect.width, h: rect.height };
   }
 
   function getThemeColors() {
-    var cs = getComputedStyle(document.documentElement);
-    var get = function (name) { return cs.getPropertyValue(name).trim(); };
+    const cs = getComputedStyle(document.documentElement);
+    const get = function (name) { return cs.getPropertyValue(name).trim(); };
     return {
       accent:  get('--accent')   || '#7c8cf5',
       accent2: get('--accent2')  || '#f5a07c',
@@ -1037,21 +1163,21 @@
   function niceScale(min, max, ticks) {
     ticks = ticks || 5;
     if (min === max) {
-      var pad = Math.abs(min) * 0.1 || 1;
+      const pad = Math.abs(min) * 0.1 || 1;
       min -= pad;
       max += pad;
     }
-    var range = niceNum(max - min, false);
-    var step = niceNum(range / (ticks - 1), true);
-    var niceMin = Math.floor(min / step) * step;
-    var niceMax = Math.ceil(max / step) * step;
+    const range = niceNum(max - min, false);
+    let step = niceNum(range / (ticks - 1), true);
+    const niceMin = Math.floor(min / step) * step;
+    const niceMax = Math.ceil(max / step) * step;
     return { min: niceMin, max: niceMax, step: step };
   }
 
   function niceNum(range, round) {
-    var exp = Math.floor(Math.log10(Math.max(range, 1e-9)));
-    var frac = range / Math.pow(10, exp);
-    var nice;
+    const exp = Math.floor(Math.log10(Math.max(range, 1e-9)));
+    const frac = range / Math.pow(10, exp);
+    let nice;
     if (round) {
       if (frac < 1.5)     nice = 1;
       else if (frac < 3)  nice = 2;
@@ -1075,40 +1201,40 @@
   }
 
   function drawWeightChart(entries, goal, projected) {
-    var canvas = document.getElementById('weight-chart');
-    var prepared = prepareCanvas(canvas);
-    var ctx = prepared.ctx, w = prepared.w, h = prepared.h;
+    const canvas = document.getElementById('weight-chart');
+    const prepared = prepareCanvas(canvas);
+    const ctx = prepared.ctx, w = prepared.w, h = prepared.h;
     ctx.clearRect(0, 0, w, h);
 
-    var colors = getThemeColors();
-    var pad = { top: 20, right: 24, bottom: 36, left: 52 };
-    var plotW = w - pad.left - pad.right;
-    var plotH = h - pad.top - pad.bottom;
+    const colors = getThemeColors();
+    const pad = { top: 20, right: 24, bottom: 36, left: 52 };
+    const plotW = w - pad.left - pad.right;
+    const plotH = h - pad.top - pad.bottom;
 
     if (entries.length === 0) {
       drawNoData(ctx, w, h, colors, 'No weight entries yet');
       return;
     }
 
-    var weights = entries.map(function (e) { return e.weight; });
-    var projWeights = projected && projected.length ? projected.map(function (p) { return p.weight; }) : [];
-    var minV = Math.min.apply(null, weights.concat(projWeights));
-    var maxV = Math.max.apply(null, weights.concat(projWeights));
+    const weights = entries.map(function (e) { return e.weight; });
+    const projWeights = projected && projected.length ? projected.map(function (p) { return p.weight; }) : [];
+    let minV = Math.min.apply(null, weights.concat(projWeights));
+    let maxV = Math.max.apply(null, weights.concat(projWeights));
     if (goal != null) {
       minV = Math.min(minV, goal);
       maxV = Math.max(maxV, goal);
     }
-    var scale = niceScale(minV - 1, maxV + 1, 5);
+    const scale = niceScale(minV - 1, maxV + 1, 5);
 
     ctx.font = '11px Inter, sans-serif';
     ctx.lineWidth = 1;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
 
-    var yFor = function (v) { return pad.top + plotH - ((v - scale.min) / (scale.max - scale.min)) * plotH; };
+    const yFor = function (v) { return pad.top + plotH - ((v - scale.min) / (scale.max - scale.min)) * plotH; };
 
-    for (var v = scale.min; v <= scale.max + 0.0001; v += scale.step) {
-      var y = yFor(v);
+    for (let v = scale.min; v <= scale.max + 0.0001; v += scale.step) {
+      const y = yFor(v);
       ctx.strokeStyle = colors.border;
       ctx.beginPath();
       ctx.moveTo(pad.left, y);
@@ -1118,14 +1244,14 @@
       ctx.fillText(v.toFixed(0), pad.left - 8, y);
     }
 
-    var allDates = entries.map(function (e) { return fromDateStr(e.date).getTime(); });
+    const allDates = entries.map(function (e) { return fromDateStr(e.date).getTime(); });
     if (projected && projected.length) {
       projected.forEach(function (p) { allDates.push(fromDateStr(p.date).getTime()); });
     }
-    var first = Math.min.apply(null, allDates);
-    var last  = Math.max.apply(null, allDates);
-    var xRange = last - first;
-    var xFor = function (ts) {
+    const first = Math.min.apply(null, allDates);
+    const last  = Math.max.apply(null, allDates);
+    const xRange = last - first;
+    const xFor = function (ts) {
       if (xRange === 0) return pad.left + plotW / 2;
       return pad.left + ((ts - first) / xRange) * plotW;
     };
@@ -1133,7 +1259,7 @@
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillStyle = colors.textDim;
-    var labelDates = [];
+    const labelDates = [];
     if (entries.length === 1) {
       labelDates.push(entries[0].date);
     } else {
@@ -1142,7 +1268,7 @@
       labelDates.push(entries[entries.length - 1].date);
     }
     labelDates.forEach(function (d) {
-      var x = xFor(fromDateStr(d).getTime());
+      const x = xFor(fromDateStr(d).getTime());
       ctx.fillText(formatDateShort(d), x, pad.top + plotH + 8);
     });
 
@@ -1151,7 +1277,7 @@
       ctx.setLineDash([5, 5]);
       ctx.strokeStyle = colors.accent2;
       ctx.lineWidth = 1.5;
-      var gy = yFor(goal);
+      const gy = yFor(goal);
       ctx.beginPath();
       ctx.moveTo(pad.left, gy);
       ctx.lineTo(w - pad.right, gy);
@@ -1165,19 +1291,19 @@
     }
 
     ctx.save();
-    var grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
     grad.addColorStop(0, colors.accent + '55');
     grad.addColorStop(1, colors.accent + '00');
     ctx.fillStyle = grad;
     ctx.beginPath();
     entries.forEach(function (e, i) {
-      var x = xFor(fromDateStr(e.date).getTime());
-      var y2 = yFor(e.weight);
+      const x = xFor(fromDateStr(e.date).getTime());
+      const y2 = yFor(e.weight);
       if (i === 0) ctx.moveTo(x, y2);
       else ctx.lineTo(x, y2);
     });
-    var lastX = xFor(fromDateStr(entries[entries.length - 1].date).getTime());
-    var firstX = xFor(fromDateStr(entries[0].date).getTime());
+    const lastX = xFor(fromDateStr(entries[entries.length - 1].date).getTime());
+    const firstX = xFor(fromDateStr(entries[0].date).getTime());
     ctx.lineTo(lastX, pad.top + plotH);
     ctx.lineTo(firstX, pad.top + plotH);
     ctx.closePath();
@@ -1190,8 +1316,8 @@
     ctx.lineCap = 'round';
     ctx.beginPath();
     entries.forEach(function (e, i) {
-      var x = xFor(fromDateStr(e.date).getTime());
-      var y2 = yFor(e.weight);
+      const x = xFor(fromDateStr(e.date).getTime());
+      const y2 = yFor(e.weight);
       if (i === 0) ctx.moveTo(x, y2);
       else ctx.lineTo(x, y2);
     });
@@ -1199,8 +1325,8 @@
 
     ctx.fillStyle = colors.accent;
     entries.forEach(function (e) {
-      var x = xFor(fromDateStr(e.date).getTime());
-      var y2 = yFor(e.weight);
+      const x = xFor(fromDateStr(e.date).getTime());
+      const y2 = yFor(e.weight);
       ctx.beginPath();
       ctx.arc(x, y2, 3, 0, Math.PI * 2);
       ctx.fill();
@@ -1216,8 +1342,8 @@
       ctx.globalAlpha = 0.7;
       ctx.beginPath();
       projected.forEach(function (p, i) {
-        var x = xFor(fromDateStr(p.date).getTime());
-        var y2 = yFor(p.weight);
+        const x = xFor(fromDateStr(p.date).getTime());
+        const y2 = yFor(p.weight);
         if (i === 0) ctx.moveTo(x, y2);
         else ctx.lineTo(x, y2);
       });
@@ -1227,34 +1353,34 @@
   }
 
   function drawCaloriesChart(days, totals, target) {
-    var canvas = document.getElementById('calories-chart');
-    var prepared = prepareCanvas(canvas);
-    var ctx = prepared.ctx, w = prepared.w, h = prepared.h;
+    const canvas = document.getElementById('calories-chart');
+    const prepared = prepareCanvas(canvas);
+    const ctx = prepared.ctx, w = prepared.w, h = prepared.h;
     ctx.clearRect(0, 0, w, h);
 
-    var colors = getThemeColors();
-    var padChart = { top: 20, right: 24, bottom: 42, left: 52 };
-    var plotW = w - padChart.left - padChart.right;
-    var plotH = h - padChart.top - padChart.bottom;
+    const colors = getThemeColors();
+    const padChart = { top: 20, right: 24, bottom: 42, left: 52 };
+    const plotW = w - padChart.left - padChart.right;
+    const plotH = h - padChart.top - padChart.bottom;
 
-    var hasData = totals.some(function (t) { return t > 0; });
+    const hasData = totals.some(function (t) { return t > 0; });
     if (!hasData && !(target > 0)) {
       drawNoData(ctx, w, h, colors, 'No calorie entries yet');
       return;
     }
 
-    var maxV = Math.max.apply(null, totals.concat([target || 0, 10]));
-    var scale = niceScale(0, maxV * 1.1, 5);
+    let maxV = Math.max.apply(null, totals.concat([target || 0, 10]));
+    const scale = niceScale(0, maxV * 1.1, 5);
 
     ctx.font = '11px Inter, sans-serif';
     ctx.lineWidth = 1;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
 
-    var yFor = function (v) { return padChart.top + plotH - ((v - scale.min) / (scale.max - scale.min)) * plotH; };
+    const yFor = function (v) { return padChart.top + plotH - ((v - scale.min) / (scale.max - scale.min)) * plotH; };
 
-    for (var v = scale.min; v <= scale.max + 0.0001; v += scale.step) {
-      var y = yFor(v);
+    for (let v = scale.min; v <= scale.max + 0.0001; v += scale.step) {
+      const y = yFor(v);
       ctx.strokeStyle = colors.border;
       ctx.beginPath();
       ctx.moveTo(padChart.left, y);
@@ -1264,20 +1390,20 @@
       ctx.fillText(v.toLocaleString(), padChart.left - 8, y);
     }
 
-    var n = days.length;
-    var slot = plotW / n;
-    var barW = Math.max(4, slot * 0.68);
-    var todayVal = todayStr();
-    for (var i = 0; i < n; i++) {
-      var x = padChart.left + i * slot + (slot - barW) / 2;
-      var val = totals[i];
-      var yb = yFor(val);
-      var barH = Math.max(0, padChart.top + plotH - yb);
-      var isOver = target > 0 && val > target;
-      var isToday = days[i] === todayVal;
+    const n = days.length;
+    const slot = plotW / n;
+    const barW = Math.max(4, slot * 0.68);
+    const todayVal = todayStr();
+    for (let i = 0; i < n; i++) {
+      const x = padChart.left + i * slot + (slot - barW) / 2;
+      const val = totals[i];
+      const yb = yFor(val);
+      const barH = Math.max(0, padChart.top + plotH - yb);
+      const isOver = target > 0 && val > target;
+      const isToday = days[i] === todayVal;
       ctx.fillStyle = isOver ? colors.accent2 : colors.accent;
       ctx.globalAlpha = val === 0 ? 0.2 : (isToday ? 1 : 0.8);
-      var r = Math.min(3, barW / 2, barH);
+      const r = Math.min(3, barW / 2, barH);
       ctx.beginPath();
       ctx.moveTo(x, yb + r);
       ctx.quadraticCurveTo(x, yb, x + r, yb);
@@ -1295,7 +1421,7 @@
       ctx.setLineDash([5, 5]);
       ctx.strokeStyle = colors.accent2;
       ctx.lineWidth = 1.5;
-      var ty = yFor(target);
+      const ty = yFor(target);
       ctx.beginPath();
       ctx.moveTo(padChart.left, ty);
       ctx.lineTo(w - padChart.right, ty);
@@ -1311,19 +1437,19 @@
     ctx.fillStyle = colors.textDim;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    var labelIndices = n >= 3 ? [0, Math.floor(n / 2), n - 1] : Array.from({ length: n }, function (_, idx) { return idx; });
+    const labelIndices = n >= 3 ? [0, Math.floor(n / 2), n - 1] : Array.from({ length: n }, function (_, idx) { return idx; });
     labelIndices.forEach(function (idx) {
-      var x = padChart.left + idx * slot + slot / 2;
+      const x = padChart.left + idx * slot + slot / 2;
       ctx.fillText(formatDateShort(days[idx]), x, padChart.top + plotH + 10);
     });
   }
 
   // ─── Actions ───────────────────────────────────────
   function addCalorieEntry(name, calories, quantity) {
-    var qty = quantity || 1;
-    var today = todayStr();
-    var cal = Math.round(calories);
-    var existing = state.calorieEntries.find(function (e) {
+    const qty = quantity || 1;
+    const today = todayStr();
+    const cal = Math.round(calories);
+    const existing = state.calorieEntries.find(function (e) {
       return e.date === today && e.name === name && e.calories === cal;
     });
     if (existing) {
@@ -1351,10 +1477,10 @@
   }
 
   function exportData() {
-    var json = JSON.stringify(state, null, 2);
-    var blob = new Blob([json], { type: 'application/json' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
+    const json = JSON.stringify(state, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
     a.href = url;
     a.download = 'health-tracker-' + todayStr() + '.json';
     document.body.appendChild(a);
@@ -1364,7 +1490,7 @@
   }
 
   function showDataStatus(message, isError) {
-    var el = document.getElementById('data-status');
+    const el = document.getElementById('data-status');
     if (!el) return;
     el.textContent = message;
     el.classList.toggle('error', !!isError);
@@ -1374,10 +1500,10 @@
   }
 
   function importData(file) {
-    var reader = new FileReader();
+    const reader = new FileReader();
     reader.onload = function () {
       try {
-        var parsed = JSON.parse(reader.result);
+        const parsed = JSON.parse(reader.result);
         state = normalizeState(parsed);
         saveState();
         renderCurrentView();
@@ -1407,16 +1533,16 @@
     });
 
     // Food form
-    var foodForm = document.getElementById('food-form');
-    var foodName = document.getElementById('food-name');
-    var foodCal  = document.getElementById('food-calories');
-    var foodQty  = document.getElementById('food-qty');
+    const foodForm = document.getElementById('food-form');
+    const foodName = document.getElementById('food-name');
+    const foodCal  = document.getElementById('food-calories');
+    const foodQty  = document.getElementById('food-qty');
     foodForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      var name = foodName.value.trim();
-      var cal = Number(foodCal.value);
+      let name = foodName.value.trim();
+      const cal = Number(foodCal.value);
       if (!name || !Number.isFinite(cal) || cal <= 0) return;
-      var qty = Number(foodQty.value) || 1;
+      const qty = Number(foodQty.value) || 1;
       addCalorieEntry(name, cal, qty);
       foodName.value = '';
       foodCal.value = '';
@@ -1426,8 +1552,8 @@
 
     // Fav button
     document.getElementById('food-fav').addEventListener('click', function () {
-      var name = foodName.value.trim();
-      var cal = Number(foodCal.value);
+      let name = foodName.value.trim();
+      const cal = Number(foodCal.value);
       if (!name || !Number.isFinite(cal) || cal <= 0) return;
       addFrequentFood(name, cal);
       foodName.value = '';
@@ -1436,14 +1562,14 @@
     });
 
     // Weight form
-    var weightForm = document.getElementById('weight-form');
-    var weightDate = document.getElementById('weight-date');
-    var weightValue = document.getElementById('weight-value');
+    const weightForm = document.getElementById('weight-form');
+    const weightDate = document.getElementById('weight-date');
+    const weightValue = document.getElementById('weight-value');
     weightDate.value = todayStr();
     weightForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      var date = weightDate.value;
-      var val = Number(weightValue.value);
+      const date = weightDate.value;
+      const val = Number(weightValue.value);
       if (!date || !Number.isFinite(val) || val <= 0) return;
       upsertWeightEntry(date, val);
       weightValue.value = '';
@@ -1451,14 +1577,14 @@
     });
 
     // Settings form
-    var settingsForm = document.getElementById('settings-form');
+    const settingsForm = document.getElementById('settings-form');
     settingsForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      var cal = Number(document.getElementById('setting-cal-target').value);
-      var goalW = Number(document.getElementById('setting-goal-weight').value);
-      var tdee = Number(document.getElementById('setting-tdee').value);
-      var normDays = Number(document.getElementById('setting-norm-days').value);
-      var workoutGoal = Number(document.getElementById('setting-workout-goal').value);
+      const cal = Number(document.getElementById('setting-cal-target').value);
+      const goalW = Number(document.getElementById('setting-goal-weight').value);
+      let tdee = Number(document.getElementById('setting-tdee').value);
+      const normDays = Number(document.getElementById('setting-norm-days').value);
+      const workoutGoal = Number(document.getElementById('setting-workout-goal').value);
       if (Number.isFinite(cal) && cal >= 0) state.settings.dailyCalorieTarget = cal;
       if (Number.isFinite(goalW) && goalW >= 0) state.settings.goalWeight = goalW;
       if (Number.isFinite(tdee) && tdee >= 0) state.settings.tdee = tdee;
@@ -1466,7 +1592,7 @@
       if (Number.isFinite(workoutGoal) && workoutGoal >= 0) state.settings.weeklyWorkoutGoal = workoutGoal;
       state.settings.subtractBurnedFromProjection = document.getElementById('setting-subtract-burned').checked;
       saveState();
-      var status = document.getElementById('settings-status');
+      const status = document.getElementById('settings-status');
       status.textContent = 'Saved';
       status.classList.add('show');
       setTimeout(function () { status.classList.remove('show'); }, 1500);
@@ -1475,10 +1601,10 @@
     // Data management
     document.getElementById('export-btn').addEventListener('click', exportData);
 
-    var importFile = document.getElementById('import-file');
+    const importFile = document.getElementById('import-file');
     document.getElementById('import-btn').addEventListener('click', function () { importFile.click(); });
     importFile.addEventListener('change', function () {
-      var file = importFile.files && importFile.files[0];
+      const file = importFile.files && importFile.files[0];
       if (!file) return;
       if (!confirm('This will overwrite all existing data. Continue?')) {
         importFile.value = '';
@@ -1522,7 +1648,7 @@
     document.getElementById('delete-template-btn').addEventListener('click', deleteTemplate);
 
     // Redraw charts on resize
-    var resizeRaf = 0;
+    let resizeRaf = 0;
     window.addEventListener('resize', function () {
       if (currentView !== 'weight' && currentView !== 'history') return;
       cancelAnimationFrame(resizeRaf);

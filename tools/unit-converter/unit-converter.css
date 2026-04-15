@@ -127,3 +127,8 @@
     padding-bottom: 0;
   }
 }
+
+/* Prevent iOS auto-zoom on focus */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea { font-size: 16px; }
+}

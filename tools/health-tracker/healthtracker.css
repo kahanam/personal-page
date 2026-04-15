@@ -806,6 +806,11 @@
   max-width: 72px;
 }
 
+.cc-exercise-label-type {
+  flex: 0 0 90px;
+  max-width: 100px;
+}
+
 .cc-exercise-label-name {
   flex: 2 1 200px;
   max-width: none;
@@ -822,6 +827,11 @@
   margin-bottom: 0.5rem;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.cc-input-type {
+  flex: 0 0 90px;
+  max-width: 100px;
 }
 
 .cc-template-actions {
@@ -989,4 +999,9 @@
   .cc-exercise-labels {
     display: none;
   }
+}
+
+/* Prevent iOS auto-zoom on focus */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea { font-size: 16px; }
 }
