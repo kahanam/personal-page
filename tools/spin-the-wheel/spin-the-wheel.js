@@ -10,9 +10,9 @@ const optionInput = document.getElementById("option-input");
 const optionList = document.getElementById("option-list");
 
 const COLORS = [
-  "#e94560", "#0f3460", "#533483", "#16813d",
-  "#e77f24", "#2d82b7", "#d63384", "#20c997",
-  "#6f42c1", "#fd7e14", "#1abc9c", "#e74c3c",
+  "#c06050", "#cc9a6a", "#4a8a7a", "#9a8ab0",
+  "#d4875a", "#b06878", "#8a9a5a", "#6a7a9a",
+  "#9a7a5a", "#3a7a7a", "#c07868", "#6a9a6a",
 ];
 
 let options = [];
@@ -28,9 +28,9 @@ function drawWheel() {
   if (options.length === 0) {
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.fillStyle = "#0f3460";
+    ctx.fillStyle = "#1e1b17";
     ctx.fill();
-    ctx.fillStyle = "#d4d4e0";
+    ctx.fillStyle = "#ddd6ca";
     ctx.font = "18px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -51,7 +51,7 @@ function drawWheel() {
     ctx.closePath();
     ctx.fillStyle = COLORS[i % COLORS.length];
     ctx.fill();
-    ctx.strokeStyle = "#1a1a2e";
+    ctx.strokeStyle = "#171411";
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -72,7 +72,7 @@ function drawWheel() {
   // Center circle
   ctx.beginPath();
   ctx.arc(cx, cy, 18, 0, Math.PI * 2);
-  ctx.fillStyle = "#1a1a2e";
+  ctx.fillStyle = "#171411";
   ctx.fill();
 }
 
