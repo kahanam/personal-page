@@ -144,6 +144,39 @@
   font-size: 0.75rem;
 }
 
+/* ─── Today weight delta ─────────────────────────── */
+.cc-weight-delta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+
+.cc-weight-delta-label {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.cc-weight-delta-value {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cc-weight-delta-value.losing {
+  color: var(--color-valid);
+}
+
+.cc-weight-delta-value.gaining {
+  color: var(--color-error);
+}
+
 /* ─── Expected weight row ─────────────────────────── */
 .cc-expected-row {
   border-top: 1px solid var(--border);

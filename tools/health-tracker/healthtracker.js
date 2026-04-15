@@ -254,6 +254,21 @@
     progressEl.setAttribute('width', String(pct));
     progressEl.classList.toggle('over', target > 0 && net > target);
 
+    // Weight delta for today
+    var tdee = Number(state.settings.tdee);
+    var deltaRow = document.getElementById('today-weight-delta');
+    var deltaValEl = document.getElementById('today-weight-delta-value');
+    if (Number.isFinite(tdee) && tdee > 0 && total > 0) {
+      var todayNet = state.settings.subtractBurnedFromProjection !== false ? net : total;
+      var deltaLbs = (todayNet - tdee) / CAL_PER_LB;
+      var sign = deltaLbs >= 0 ? '+' : '';
+      deltaValEl.textContent = sign + deltaLbs.toFixed(2) + ' lbs';
+      deltaValEl.className = 'cc-weight-delta-value ' + (deltaLbs > 0 ? 'gaining' : deltaLbs < 0 ? 'losing' : '');
+      deltaRow.hidden = false;
+    } else {
+      deltaRow.hidden = true;
+    }
+
     renderFrequentFoods();
 
     var list = document.getElementById('today-list');
