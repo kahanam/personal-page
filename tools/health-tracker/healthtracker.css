@@ -184,6 +184,13 @@
   padding-top: 0.8rem;
 }
 
+.cc-expected-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
 .cc-expected-value {
   font-family: 'Sora', sans-serif;
   font-size: 1.35rem;

@@ -289,6 +289,16 @@
       todayExpectedRow.hidden = true;
     }
 
+    const projectedCol = document.getElementById('today-projected-col');
+    const projectedInfo = calcProjectedWeight();
+    if (expectedInfo && projectedInfo) {
+      projectedCol.hidden = false;
+      document.getElementById('today-projected-weight').textContent = projectedInfo.projected.toFixed(1);
+      document.getElementById('today-projected-sub').textContent = formatDateShort(projectedInfo.projectionDate);
+    } else {
+      projectedCol.hidden = true;
+    }
+
     renderFrequentFoods();
 
     const list = document.getElementById('today-list');
@@ -349,6 +359,10 @@
   // ─── Weight view ───────────────────────────────────
   const CAL_PER_LB = 3500;
 
+  function calorieWeightDelta(calories, tdee) {
+    return (calories - tdee) / CAL_PER_LB;
+  }
+
   function calcExpectedWeight() {
     let tdee = Number(state.settings.tdee);
     if (!Number.isFinite(tdee) || tdee <= 0) return null;
@@ -388,6 +402,35 @@
     };
   }
 
+  function calcProjectedWeight() {
+    const expectedInfo = calcExpectedWeight();
+    if (!expectedInfo) return null;
+
+    const target = Number(state.settings.dailyCalorieTarget) || 0;
+    const tdee = Number(state.settings.tdee);
+    if (!Number.isFinite(tdee) || tdee <= 0 || target <= 0) return null;
+
+    const normDays = Number(state.settings.normalizationDays) || 7;
+    const projectionDate = fromDateStr(expectedInfo.fromDate);
+    projectionDate.setDate(projectionDate.getDate() + normDays);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (projectionDate < tomorrow) return null;
+
+    const remainingDays = Math.ceil((projectionDate - today) / 86400000);
+    const dailyDelta = calorieWeightDelta(target, tdee);
+
+    return {
+      projected: expectedInfo.expected + remainingDays * dailyDelta,
+      projectionDate: toDateStr(projectionDate),
+      remainingDays: remainingDays
+    };
+  }
+
   function buildProjectedWeightSeries() {
     let tdee = Number(state.settings.tdee);
     if (!Number.isFinite(tdee) || tdee <= 0) return [];
@@ -417,7 +460,7 @@
         const entries = getEntriesForDate(ds);
         const burned = state.settings.subtractBurnedFromProjection !== false ? getBurnedForDate(ds) : 0;
         const eaten = entries.length > 0 ? getTotalForDate(ds) - burned : tdee;
-        currentWeight += (eaten - tdee) / CAL_PER_LB;
+        currentWeight += calorieWeightDelta(eaten, tdee);
       }
       points.push({ date: ds, weight: currentWeight });
       d.setDate(d.getDate() + 1);
@@ -461,6 +504,16 @@
     } else {
       expectedEl.textContent = '\u2014';
       expectedSubEl.textContent = '';
+    }
+
+    const weightProjectedCol = document.getElementById('weight-projected-col');
+    const weightProjectedInfo = calcProjectedWeight();
+    if (expectedInfo && weightProjectedInfo) {
+      weightProjectedCol.hidden = false;
+      document.getElementById('weight-projected-weight').textContent = weightProjectedInfo.projected.toFixed(1);
+      document.getElementById('weight-projected-sub').textContent = formatDateShort(weightProjectedInfo.projectionDate);
+    } else {
+      weightProjectedCol.hidden = true;
     }
 
     const dateInput = document.getElementById('weight-date');
