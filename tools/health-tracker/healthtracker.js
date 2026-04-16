@@ -284,7 +284,7 @@
       document.getElementById('today-expected-weight').textContent = expectedInfo.expected.toFixed(1);
       const eDelta = expectedInfo.expected - expectedInfo.fromWeight;
       const eSign = eDelta >= 0 ? '+' : '';
-      document.getElementById('today-expected-sub').textContent = eSign + eDelta.toFixed(1) + ' lbs from ' + expectedInfo.fromWeight.toFixed(1) + ' on ' + formatDateShort(expectedInfo.fromDate);
+      document.getElementById('today-expected-sub').textContent = eSign + eDelta.toFixed(1) + ' lbs from ' + expectedInfo.fromWeight.toFixed(1) + ' weighed ' + formatDateShort(expectedInfo.fromDate);
     } else {
       todayExpectedRow.hidden = true;
     }
@@ -294,7 +294,7 @@
     if (expectedInfo && projectedInfo) {
       projectedCol.hidden = false;
       document.getElementById('today-projected-weight').textContent = projectedInfo.projected.toFixed(1);
-      document.getElementById('today-projected-sub').textContent = formatDateShort(projectedInfo.projectionDate);
+      document.getElementById('today-projected-sub').textContent = 'by ' + formatDateShort(projectedInfo.projectionDate) + ' at ' + target.toLocaleString() + ' kcal/day';
     } else {
       projectedCol.hidden = true;
     }
@@ -500,7 +500,7 @@
       expectedEl.textContent = expectedInfo.expected.toFixed(1);
       const delta = expectedInfo.expected - expectedInfo.fromWeight;
       const sign = delta >= 0 ? '+' : '';
-      expectedSubEl.textContent = sign + delta.toFixed(1) + ' lbs from ' + expectedInfo.fromWeight.toFixed(1) + ' on ' + formatDateShort(expectedInfo.fromDate);
+      expectedSubEl.textContent = sign + delta.toFixed(1) + ' lbs from ' + expectedInfo.fromWeight.toFixed(1) + ' weighed ' + formatDateShort(expectedInfo.fromDate);
     } else {
       expectedEl.textContent = '\u2014';
       expectedSubEl.textContent = '';
@@ -511,7 +511,8 @@
     if (expectedInfo && weightProjectedInfo) {
       weightProjectedCol.hidden = false;
       document.getElementById('weight-projected-weight').textContent = weightProjectedInfo.projected.toFixed(1);
-      document.getElementById('weight-projected-sub').textContent = formatDateShort(weightProjectedInfo.projectionDate);
+      const projTarget = Number(state.settings.dailyCalorieTarget) || 0;
+      document.getElementById('weight-projected-sub').textContent = 'by ' + formatDateShort(weightProjectedInfo.projectionDate) + ' at ' + projTarget.toLocaleString() + ' kcal/day';
     } else {
       weightProjectedCol.hidden = true;
     }
