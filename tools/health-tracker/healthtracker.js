@@ -432,6 +432,41 @@
     };
   }
 
+  function calcGoalHitDate() {
+    const expectedInfo = calcExpectedWeight();
+    if (!expectedInfo) return null;
+
+    const goal = Number(state.settings.goalWeight);
+    const target = Number(state.settings.dailyCalorieTarget) || 0;
+    const tdee = Number(state.settings.tdee);
+    if (!Number.isFinite(goal) || goal <= 0) return null;
+    if (!Number.isFinite(tdee) || tdee <= 0 || target <= 0) return null;
+
+    const diff = goal - expectedInfo.expected;
+    if (Math.abs(diff) <= 0.05) {
+      return {
+        goalDate: todayStr(),
+        daysToGoal: 0,
+        alreadyAtGoal: true
+      };
+    }
+
+    const dailyDelta = calorieWeightDelta(target, tdee);
+    if (Math.abs(dailyDelta) < 0.000001) return null;
+    if ((diff > 0 && dailyDelta <= 0) || (diff < 0 && dailyDelta >= 0)) return null;
+
+    const daysToGoal = Math.ceil(Math.abs(diff / dailyDelta));
+    const goalDate = new Date();
+    goalDate.setHours(0, 0, 0, 0);
+    goalDate.setDate(goalDate.getDate() + daysToGoal);
+
+    return {
+      goalDate: toDateStr(goalDate),
+      daysToGoal: daysToGoal,
+      alreadyAtGoal: false
+    };
+  }
+
   function buildProjectedWeightSeries() {
     let tdee = Number(state.settings.tdee);
     if (!Number.isFinite(tdee) || tdee <= 0) return [];
@@ -478,6 +513,7 @@
     const currentEl = document.getElementById('current-weight');
     const goalEl = document.getElementById('goal-weight-display');
     const toGoalEl = document.getElementById('weight-to-goal');
+    const goalHitDateEl = document.getElementById('goal-hit-date');
 
     currentEl.textContent = current ? current.weight.toFixed(1) : '\u2014';
     const currentDateEl = document.getElementById('current-weight-date');
@@ -492,6 +528,17 @@
       else                   toGoalEl.textContent = 'at goal';
     } else {
       toGoalEl.textContent = '';
+    }
+
+    const goalHitInfo = calcGoalHitDate();
+    if (goalHitInfo) {
+      if (goalHitInfo.alreadyAtGoal) {
+        goalHitDateEl.textContent = 'At target calories: today';
+      } else {
+        goalHitDateEl.textContent = 'At target calories: ~' + formatDateShort(goalHitInfo.goalDate);
+      }
+    } else {
+      goalHitDateEl.textContent = '';
     }
 
     const expectedEl = document.getElementById('expected-weight');
@@ -513,7 +560,10 @@
       weightProjectedCol.hidden = false;
       document.getElementById('weight-projected-weight').textContent = weightProjectedInfo.projected.toFixed(1);
       const projTarget = Number(state.settings.dailyCalorieTarget) || 0;
-      document.getElementById('weight-projected-sub').textContent = 'by ' + formatDateShort(weightProjectedInfo.projectionDate) + ' at ' + projTarget.toLocaleString() + ' kcal/day';
+      const goalDateText = goalHitInfo
+        ? (goalHitInfo.alreadyAtGoal ? ' · goal today' : ' · goal ~' + formatDateShort(goalHitInfo.goalDate))
+        : '';
+      document.getElementById('weight-projected-sub').textContent = 'by ' + formatDateShort(weightProjectedInfo.projectionDate) + ' at ' + projTarget.toLocaleString() + ' kcal/day' + goalDateText;
     } else {
       weightProjectedCol.hidden = true;
     }
