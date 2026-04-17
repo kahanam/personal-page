@@ -280,14 +280,17 @@
     // Expected weight on Today tab
     const todayExpectedRow = document.getElementById('today-expected-row');
     const expectedInfo = calcExpectedWeight();
+    const todayExpectedSubEl = document.getElementById('today-expected-sub');
     if (expectedInfo) {
       todayExpectedRow.hidden = false;
       document.getElementById('today-expected-weight').textContent = expectedInfo.expected.toFixed(1);
       const eDelta = expectedInfo.expected - expectedInfo.fromWeight;
       const eSign = eDelta >= 0 ? '+' : '';
-      document.getElementById('today-expected-sub').textContent = eSign + eDelta.toFixed(1) + ' lbs from ' + expectedInfo.fromWeight.toFixed(1) + ' weighed ' + formatDateShort(expectedInfo.fromDate);
+      todayExpectedSubEl.textContent = eSign + eDelta.toFixed(1) + ' lbs from ' + expectedInfo.fromWeight.toFixed(1) + ' weighed ' + formatDateShort(expectedInfo.fromDate);
+      todayExpectedSubEl.className = 'cc-summary-sub ' + (eDelta > 0.05 ? 'gaining' : eDelta < -0.05 ? 'losing' : '');
     } else {
       todayExpectedRow.hidden = true;
+      todayExpectedSubEl.className = 'cc-summary-sub';
     }
 
     const projectedCol = document.getElementById('today-projected-col');
@@ -549,9 +552,11 @@
       const delta = expectedInfo.expected - expectedInfo.fromWeight;
       const sign = delta >= 0 ? '+' : '';
       expectedSubEl.textContent = sign + delta.toFixed(1) + ' lbs from ' + expectedInfo.fromWeight.toFixed(1) + ' weighed ' + formatDateShort(expectedInfo.fromDate);
+      expectedSubEl.className = 'cc-summary-sub ' + (delta > 0.05 ? 'gaining' : delta < -0.05 ? 'losing' : '');
     } else {
       expectedEl.textContent = '\u2014';
       expectedSubEl.textContent = '';
+      expectedSubEl.className = 'cc-summary-sub';
     }
 
     const weightProjectedCol = document.getElementById('weight-projected-col');

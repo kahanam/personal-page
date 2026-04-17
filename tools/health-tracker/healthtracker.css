@@ -111,6 +111,14 @@
   font-variant-numeric: tabular-nums;
 }
 
+.cc-summary-sub.losing {
+  color: var(--color-valid);
+}
+
+.cc-summary-sub.gaining {
+  color: var(--color-error);
+}
+
 /* ─── Burned calories row ────────────────────────── */
 .cc-summary-burned {
   display: flex;
