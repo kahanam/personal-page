@@ -19,6 +19,7 @@
       goalWeight: 180,
       tdee: 2000,
       normalizationDays: 7,
+      projectionDays: 7,
       weeklyWorkoutGoal: 3,
       subtractBurnedFromProjection: true
     }
@@ -410,9 +411,9 @@
     const tdee = Number(state.settings.tdee);
     if (!Number.isFinite(tdee) || tdee <= 0 || target <= 0) return null;
 
-    const normDays = Number(state.settings.normalizationDays) || 7;
+    const projectionDays = Number(state.settings.projectionDays) || 7;
     const projectionDate = fromDateStr(expectedInfo.fromDate);
-    projectionDate.setDate(projectionDate.getDate() + normDays);
+    projectionDate.setDate(projectionDate.getDate() + projectionDays);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -1197,6 +1198,7 @@
     document.getElementById('setting-goal-weight').value = state.settings.goalWeight != null ? state.settings.goalWeight : '';
     document.getElementById('setting-tdee').value = state.settings.tdee != null ? state.settings.tdee : '';
     document.getElementById('setting-norm-days').value = state.settings.normalizationDays != null ? state.settings.normalizationDays : 7;
+    document.getElementById('setting-projection-days').value = state.settings.projectionDays != null ? state.settings.projectionDays : 7;
     document.getElementById('setting-workout-goal').value = state.settings.weeklyWorkoutGoal != null ? state.settings.weeklyWorkoutGoal : 3;
     document.getElementById('setting-subtract-burned').checked = state.settings.subtractBurnedFromProjection !== false;
     const status = document.getElementById('settings-status');
@@ -1651,11 +1653,13 @@
       const goalW = Number(document.getElementById('setting-goal-weight').value);
       let tdee = Number(document.getElementById('setting-tdee').value);
       const normDays = Number(document.getElementById('setting-norm-days').value);
+      const projectionDays = Number(document.getElementById('setting-projection-days').value);
       const workoutGoal = Number(document.getElementById('setting-workout-goal').value);
       if (Number.isFinite(cal) && cal >= 0) state.settings.dailyCalorieTarget = cal;
       if (Number.isFinite(goalW) && goalW >= 0) state.settings.goalWeight = goalW;
       if (Number.isFinite(tdee) && tdee >= 0) state.settings.tdee = tdee;
       if (Number.isFinite(normDays) && normDays >= 1) state.settings.normalizationDays = normDays;
+      if (Number.isFinite(projectionDays) && projectionDays >= 1) state.settings.projectionDays = projectionDays;
       if (Number.isFinite(workoutGoal) && workoutGoal >= 0) state.settings.weeklyWorkoutGoal = workoutGoal;
       state.settings.subtractBurnedFromProjection = document.getElementById('setting-subtract-burned').checked;
       saveState();
