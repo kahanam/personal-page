@@ -28,6 +28,7 @@
   // ─── State ─────────────────────────────────────────
   let state = loadState();
   let currentView = 'today';
+  let selectedDate = todayStr(); // The date currently being viewed in the "Today" tab
   let workoutSubView = 'home'; // 'home' | 'editor'
   let editingTemplateId = null; // null | 'new' | template id
 
@@ -227,14 +228,35 @@
 
   function renderToday() {
     const today = todayStr();
-    const entries = getEntriesForDate(today);
-    const total = getTotalForDate(today);
-    const burned = getBurnedForDate(today);
+    const isToday = selectedDate === today;
+    const entries = getEntriesForDate(selectedDate);
+    const total = getTotalForDate(selectedDate);
+    const burned = getBurnedForDate(selectedDate);
     const target = Number(state.settings.dailyCalorieTarget) || 0;
     const net = total - burned;
     const remaining = target - net;
 
-    document.getElementById('today-date').textContent = formatDateLong(today);
+    document.getElementById('today-date').textContent = formatDateLong(selectedDate);
+    document.getElementById('go-today').hidden = isToday;
+    document.getElementById('next-day').disabled = selectedDate >= today;
+
+    // Update summary labels
+    const summaryLabel = document.querySelector('#view-today .cc-summary-label');
+    if (summaryLabel) {
+      if (isToday) {
+        summaryLabel.textContent = "Today's calories";
+      } else {
+        const d = fromDateStr(selectedDate);
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (selectedDate === toDateStr(yesterday)) {
+          summaryLabel.textContent = "Yesterday's calories";
+        } else {
+          summaryLabel.textContent = "Calories for " + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        }
+      }
+    }
+
     document.getElementById('today-total').textContent = total.toLocaleString();
     document.getElementById('today-target').textContent = target.toLocaleString();
 
@@ -262,14 +284,22 @@
     progressEl.setAttribute('width', String(pct));
     progressEl.classList.toggle('over', target > 0 && net > target);
 
+    // Update Expected weight label if needed
+    const expectedLabel = document.querySelector('#view-today .cc-expected-row .cc-summary-label');
+    if (expectedLabel) {
+      expectedLabel.textContent = isToday ? "Expected today" : "Expected weight";
+    }
+
     // Weight delta for today
     let tdee = Number(state.settings.tdee);
     const deltaRow = document.getElementById('today-weight-delta');
     const deltaValEl = document.getElementById('today-weight-delta-value');
+    const deltaLabelEl = document.querySelector('#today-weight-delta .cc-weight-delta-label');
     if (Number.isFinite(tdee) && tdee > 0 && total > 0) {
       const todayNet = state.settings.subtractBurnedFromProjection !== false ? net : total;
       const deltaLbs = (todayNet - tdee) / CAL_PER_LB;
       const sign = deltaLbs >= 0 ? '+' : '';
+      if (deltaLabelEl) deltaLabelEl.textContent = isToday ? "Today's weight change" : "Daily weight delta";
       deltaValEl.textContent = sign + deltaLbs.toFixed(2) + ' lbs';
       deltaValEl.className = 'cc-weight-delta-value ' + (deltaLbs > 0 ? 'gaining' : deltaLbs < 0 ? 'losing' : '');
       deltaRow.hidden = false;
@@ -279,7 +309,7 @@
 
     // Expected weight on Today tab
     const todayExpectedRow = document.getElementById('today-expected-row');
-    const expectedInfo = calcExpectedWeight();
+    const expectedInfo = calcExpectedWeight(selectedDate);
     const todayExpectedSubEl = document.getElementById('today-expected-sub');
     if (expectedInfo) {
       todayExpectedRow.hidden = false;
@@ -295,7 +325,7 @@
 
     const projectedCol = document.getElementById('today-projected-col');
     const projectedInfo = calcProjectedWeight();
-    if (expectedInfo && projectedInfo) {
+    if (isToday && expectedInfo && projectedInfo) {
       projectedCol.hidden = false;
       document.getElementById('today-projected-weight').textContent = projectedInfo.projected.toFixed(1);
       document.getElementById('today-projected-sub').textContent = 'by ' + formatDateShort(projectedInfo.projectionDate) + ' at ' + target.toLocaleString() + ' kcal/day';
@@ -341,7 +371,7 @@
       addBtn.addEventListener('click', function () {
         entry.quantity = qty + 1;
         saveState();
-        renderToday();
+        renderCurrentView();
       });
 
       const delBtn = document.createElement('button');
@@ -352,7 +382,7 @@
       delBtn.addEventListener('click', function () {
         state.calorieEntries = state.calorieEntries.filter(function (e) { return e.id !== entry.id; });
         saveState();
-        renderToday();
+        renderCurrentView();
       });
 
       li.append(nameEl, calEl, addBtn, delBtn);
@@ -367,7 +397,7 @@
     return (calories - tdee) / CAL_PER_LB;
   }
 
-  function calcExpectedWeight() {
+  function calcExpectedWeight(targetDateStr) {
     let tdee = Number(state.settings.tdee);
     if (!Number.isFinite(tdee) || tdee <= 0) return null;
     const normDays = Number(state.settings.normalizationDays) || 7;
@@ -375,22 +405,28 @@
     const sorted = state.weightEntries.slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
     if (sorted.length === 0) return null;
 
+    const targetDate = targetDateStr ? fromDateStr(targetDateStr) : new Date();
+    targetDate.setHours(0, 0, 0, 0);
+
+    // Find the weight anchor: the last weigh-in that was at least normDays after the previous anchor
     let anchor = sorted[0];
     for (let i = 1; i < sorted.length; i++) {
-      const daysSince = (fromDateStr(sorted[i].date) - fromDateStr(anchor.date)) / 86400000;
+      const weighDate = fromDateStr(sorted[i].date);
+      if (weighDate > targetDate) break;
+
+      const daysSince = (weighDate - fromDateStr(anchor.date)) / 86400000;
       if (daysSince >= normDays) {
         anchor = sorted[i];
       }
     }
 
     const startDate = fromDateStr(anchor.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    if (startDate > targetDate) return null;
 
     let cumulative = 0;
     const d = new Date(startDate);
     d.setDate(d.getDate() + 1);
-    while (d <= today) {
+    while (d <= targetDate) {
       const dateStr = toDateStr(d);
       const entries = getEntriesForDate(dateStr);
       const burned = state.settings.subtractBurnedFromProjection !== false ? getBurnedForDate(dateStr) : 0;
@@ -631,7 +667,17 @@
       if (target > 0 && net > target) calEl.classList.add('over');
       calEl.textContent = net.toLocaleString() + ' kcal';
 
-      header.append(toggle, dateEl, calEl);
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'cc-btn cc-btn-sm cc-history-edit';
+      editBtn.textContent = 'Edit';
+      editBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        selectedDate = d;
+        showView('today');
+      });
+
+      header.append(toggle, dateEl, editBtn, calEl);
 
       if (burned > 0) {
         const burnedEl = document.createElement('span');
@@ -690,6 +736,16 @@
   }
 
   function renderWorkoutHome() {
+    // Date indicator
+    const dateInd = document.getElementById('workout-date-indicator');
+    const isToday = selectedDate === todayStr();
+    if (isToday) {
+      dateInd.hidden = true;
+    } else {
+      dateInd.hidden = false;
+      dateInd.textContent = 'Logging workouts for ' + formatDateMedium(selectedDate);
+    }
+
     // Weekly summary
     const weekStart = getWeekStart();
     const weekEnd = getWeekEnd();
@@ -1221,7 +1277,7 @@
   function logWorkout(template) {
     state.workoutLogs.push({
       id: crypto.randomUUID(),
-      date: todayStr(),
+      date: selectedDate,
       templateId: template.id,
       templateName: template.name,
       caloriesBurned: template.caloriesBurned || 0,
@@ -1244,7 +1300,7 @@
       })
     });
     saveState();
-    renderWorkoutHome();
+    renderCurrentView();
   }
 
   // ─── Settings view ─────────────────────────────────
@@ -1571,33 +1627,32 @@
   // ─── Actions ───────────────────────────────────────
   function addCalorieEntry(name, calories, quantity) {
     const qty = quantity || 1;
-    const today = todayStr();
     const cal = Math.round(calories);
     const existing = state.calorieEntries.find(function (e) {
-      return e.date === today && e.name === name && e.calories === cal;
+      return e.date === selectedDate && e.name === name && e.calories === cal;
     });
     if (existing) {
       existing.quantity = (existing.quantity || 1) + qty;
       saveState();
-      renderToday();
+      renderCurrentView();
       return;
     }
     state.calorieEntries.push({
       id: crypto.randomUUID(),
-      date: today,
+      date: selectedDate,
       name: name,
       calories: cal,
       quantity: qty
     });
     saveState();
-    renderToday();
+    renderCurrentView();
   }
 
   function upsertWeightEntry(date, weight) {
     state.weightEntries = state.weightEntries.filter(function (e) { return e.date !== date; });
     state.weightEntries.push({ date: date, weight: weight });
     saveState();
-    renderWeight();
+    renderCurrentView();
   }
 
   function exportData() {
@@ -1654,6 +1709,29 @@
     // Tabs
     document.querySelectorAll('.cc-tab').forEach(function (tab) {
       tab.addEventListener('click', function () { showView(tab.dataset.view); });
+    });
+
+    // Date navigation
+    document.getElementById('prev-day').addEventListener('click', function () {
+      const d = fromDateStr(selectedDate);
+      d.setDate(d.getDate() - 1);
+      selectedDate = toDateStr(d);
+      renderToday();
+    });
+
+    document.getElementById('next-day').addEventListener('click', function () {
+      const d = fromDateStr(selectedDate);
+      d.setDate(d.getDate() + 1);
+      const today = todayStr();
+      if (toDateStr(d) <= today) {
+        selectedDate = toDateStr(d);
+        renderToday();
+      }
+    });
+
+    document.getElementById('go-today').addEventListener('click', function () {
+      selectedDate = todayStr();
+      renderToday();
     });
 
     // Food form

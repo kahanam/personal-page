@@ -19,7 +19,7 @@
     </div>
 
     <nav class="cc-tabs" role="tablist" aria-label="Sections">
-      <button type="button" class="cc-tab active" data-view="today" role="tab" aria-selected="true">Today</button>
+      <button type="button" class="cc-tab active" data-view="today" role="tab" aria-selected="true">Calories</button>
       <button type="button" class="cc-tab" data-view="weight" role="tab" aria-selected="false">Weight</button>
       <button type="button" class="cc-tab" data-view="history" role="tab" aria-selected="false">History</button>
       <button type="button" class="cc-tab" data-view="workouts" role="tab" aria-selected="false">Workouts</button>
@@ -27,13 +27,18 @@
     </nav>
 
     <!-- Today -->
-    <section class="cc-view" id="view-today" role="tabpanel" aria-label="Today">
-      <div class="cc-date-heading" id="today-date"></div>
+    <section class="cc-view" id="view-today" role="tabpanel" aria-label="Calories">
+      <div class="cc-date-nav">
+        <button type="button" id="prev-day" class="cc-btn cc-btn-sm" aria-label="Previous day">&larr;</button>
+        <div class="cc-date-heading" id="today-date"></div>
+        <button type="button" id="next-day" class="cc-btn cc-btn-sm" aria-label="Next day">&rarr;</button>
+        <button type="button" id="go-today" class="cc-btn cc-btn-sm" title="Go to today">Today</button>
+      </div>
 
       <div class="cc-summary-card">
         <div class="cc-summary-top">
           <div>
-            <div class="cc-summary-label">Today's calories</div>
+            <div class="cc-summary-label">Calories</div>
             <div class="cc-summary-value">
               <span id="today-total">0</span><span class="cc-summary-unit"> / <span id="today-target">2000</span></span>
             </div>
@@ -94,7 +99,7 @@
         <div class="cc-frequent-list" id="frequent-list"></div>
       </div>
 
-      <ul class="cc-entry-list" id="today-list" aria-label="Today's entries"></ul>
+      <ul class="cc-entry-list" id="today-list" aria-label="Calorie entries"></ul>
     </section>
 
     <!-- Workouts -->
@@ -102,6 +107,7 @@
 
       <!-- Home sub-view -->
       <div id="workout-home">
+        <div id="workout-date-indicator" class="cc-date-indicator" hidden></div>
         <div class="cc-summary-card">
           <div class="cc-summary-top">
             <div>
@@ -182,7 +188,7 @@
         <div class="cc-expected-row">
           <div class="cc-expected-top">
             <div>
-              <div class="cc-summary-label">Expected today</div>
+              <div class="cc-summary-label">Expected weight</div>
               <div class="cc-expected-value">
                 <span id="expected-weight">&mdash;</span><span class="cc-summary-unit"> lbs</span>
               </div>

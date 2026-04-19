@@ -41,12 +41,40 @@
 }
 
 /* ─── Date heading ─────────────────────────────────── */
+.cc-date-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
 .cc-date-heading {
   font-family: 'Sora', sans-serif;
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text);
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.cc-date-nav .cc-btn-sm {
+  padding: 0.35rem 0.6rem;
+  min-width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cc-date-indicator {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--accent);
+  border-radius: var(--radius);
+  padding: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 500;
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 /* ─── Summary card ─────────────────────────────────── */
@@ -586,6 +614,13 @@
   color: var(--accent);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  margin-left: auto;
+}
+
+.cc-history-edit {
+  margin: 0 0.5rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
 }
 
 .cc-history-cal.over {
