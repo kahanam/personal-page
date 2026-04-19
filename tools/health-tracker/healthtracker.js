@@ -1543,13 +1543,14 @@
     const plotW = w - padChart.left - padChart.right;
     const plotH = h - padChart.top - padChart.bottom;
 
+    const tdee = Number(state.settings.tdee) || 0;
     const hasData = totals.some(function (t) { return t > 0; });
-    if (!hasData && !(target > 0)) {
+    if (!hasData && !(target > 0) && !(tdee > 0)) {
       drawNoData(ctx, w, h, colors, 'No calorie entries yet');
       return;
     }
 
-    let maxV = Math.max.apply(null, totals.concat([target || 0, 10]));
+    let maxV = Math.max.apply(null, totals.concat([target || 0, tdee || 0, 10]));
     const scale = niceScale(0, maxV * 1.1, 5);
 
     ctx.font = '11px Inter, sans-serif';
@@ -1612,6 +1613,24 @@
       ctx.textAlign = 'right';
       ctx.textBaseline = 'bottom';
       ctx.fillText('target ' + target.toLocaleString(), w - padChart.right - 2, yFor(target) - 3);
+    }
+
+    if (tdee > 0) {
+      ctx.save();
+      ctx.strokeStyle = colors.textDim;
+      ctx.globalAlpha = 0.5;
+      ctx.lineWidth = 1;
+      const ty = yFor(tdee);
+      ctx.beginPath();
+      ctx.moveTo(padChart.left, ty);
+      ctx.lineTo(w - padChart.right, ty);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = colors.textDim;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('maintenance ' + tdee.toLocaleString(), padChart.left + 2, ty - 3);
     }
 
     ctx.fillStyle = colors.textDim;
