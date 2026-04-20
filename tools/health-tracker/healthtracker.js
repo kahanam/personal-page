@@ -1539,7 +1539,7 @@
     ctx.clearRect(0, 0, w, h);
 
     const colors = getThemeColors();
-    const padChart = { top: 20, right: 24, bottom: 42, left: 52 };
+    const padChart = { top: 12, right: 24, bottom: 42, left: 52 };
     const plotW = w - padChart.left - padChart.right;
     const plotH = h - padChart.top - padChart.bottom;
 
@@ -1551,7 +1551,7 @@
     }
 
     let maxV = Math.max.apply(null, totals.concat([target || 0, tdee || 0, 10]));
-    const scale = niceScale(0, maxV * 1.1, 5);
+    const scale = niceScale(0, maxV * 1.04, 5);
 
     ctx.font = '11px Inter, sans-serif';
     ctx.lineWidth = 1;
