@@ -1618,8 +1618,8 @@
     if (tdee > 0) {
       ctx.save();
       ctx.strokeStyle = colors.textDim;
-      ctx.globalAlpha = 0.5;
-      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.8;
+      ctx.lineWidth = 1.5;
       const ty = yFor(tdee);
       ctx.beginPath();
       ctx.moveTo(padChart.left, ty);
@@ -1627,7 +1627,7 @@
       ctx.stroke();
       ctx.restore();
 
-      ctx.fillStyle = colors.textDim;
+      ctx.fillStyle = colors.text;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';
       ctx.fillText('maintenance ' + tdee.toLocaleString(), padChart.left + 2, ty - 3);
