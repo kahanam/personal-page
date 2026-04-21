@@ -309,14 +309,14 @@
     const weekSub = document.getElementById('today-week-sub');
     if (week.loggedDays === 0) {
       avgEl.textContent = '\u2014';
-      weekSub.textContent = 'No logs in the last week';
+      weekSub.textContent = 'No food logs in the last 7 calendar days (ending today).';
     } else {
       avgEl.textContent = week.avg != null ? week.avg.toLocaleString() + ' kcal' : '\u2014';
+      let sub = 'Averaged over ' + week.loggedDays + ' day' + (week.loggedDays === 1 ? '' : 's') + ' you logged.';
       if (target > 0) {
-        weekSub.textContent = week.onTargetDays + ' of ' + week.loggedDays + ' logged days at or under target';
-      } else {
-        weekSub.textContent = week.loggedDays + ' day(s) with logs (avg net on those days)';
+        sub += ' ' + week.onTargetDays + ' of ' + week.loggedDays + ' logged days at or under target.';
       }
+      weekSub.textContent = sub;
     }
 
     const paceCell = document.getElementById('today-pace-cell');
