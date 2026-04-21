@@ -263,6 +263,45 @@
   fill: var(--color-valid);
 }
 
+/* ─── Motivation row (streak / week / pace) ─────────── */
+.cc-motivation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 0.75rem 1rem;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+
+.cc-motivation-cell {
+  min-width: 0;
+}
+
+.cc-motivation-label {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.cc-motivation-value {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.cc-motivation-sub {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin-top: 0.3rem;
+  line-height: 1.35;
+}
+
 /* ─── Forms ────────────────────────────────────────── */
 .cc-form {
   margin-bottom: 1.2rem;

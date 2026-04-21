@@ -88,6 +88,12 @@
     return new Date(parts[0], parts[1] - 1, parts[2]);
   }
 
+  function addDaysStr(dateStr, deltaDays) {
+    const d = fromDateStr(dateStr);
+    d.setDate(d.getDate() + deltaDays);
+    return toDateStr(d);
+  }
+
   function formatDateLong(dateStr) {
     return fromDateStr(dateStr).toLocaleDateString(undefined, {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -226,6 +232,118 @@
       .reduce(function (sum, l) { return sum + (l.caloriesBurned || 0); }, 0);
   }
 
+  function getNetCaloriesForDate(dateStr) {
+    return getTotalForDate(dateStr) - getBurnedForDate(dateStr);
+  }
+
+  /** Consecutive days with at least one log ending today, or ending yesterday if today is still empty. */
+  function computeLoggingStreak() {
+    const today = todayStr();
+    let d = today;
+    if (getEntriesForDate(d).length === 0) {
+      d = addDaysStr(today, -1);
+    }
+    if (getEntriesForDate(d).length === 0) return 0;
+    let count = 0;
+    while (getEntriesForDate(d).length > 0) {
+      count++;
+      d = addDaysStr(d, -1);
+    }
+    return count;
+  }
+
+  function computeBestLoggingStreak() {
+    const dates = new Set();
+    for (let i = 0; i < state.calorieEntries.length; i++) {
+      dates.add(state.calorieEntries[i].date);
+    }
+    const sorted = Array.from(dates).sort();
+    if (sorted.length === 0) return 0;
+    let best = 1;
+    let run = 1;
+    for (let j = 1; j < sorted.length; j++) {
+      if (addDaysStr(sorted[j - 1], 1) === sorted[j]) {
+        run++;
+        if (run > best) best = run;
+      } else {
+        run = 1;
+      }
+    }
+    return best;
+  }
+
+  /** Rolling 7 calendar days ending today: avg net on logged days, on-target count, logged-day count. */
+  function computeSevenDayCalorieSummary(target) {
+    const today = todayStr();
+    let sumNet = 0;
+    let loggedDays = 0;
+    let onTargetDays = 0;
+    for (let i = 0; i < 7; i++) {
+      const dateStr = addDaysStr(today, -i);
+      const entries = getEntriesForDate(dateStr);
+      if (entries.length === 0) continue;
+      loggedDays++;
+      const net = getNetCaloriesForDate(dateStr);
+      sumNet += net;
+      if (target > 0 && net <= target) onTargetDays++;
+    }
+    const avg = loggedDays > 0 ? Math.round(sumNet / loggedDays) : null;
+    return { avg: avg, loggedDays: loggedDays, onTargetDays: onTargetDays };
+  }
+
+  function updateTodayMotivationExtras(isToday, target, remaining) {
+    const streak = computeLoggingStreak();
+    const best = computeBestLoggingStreak();
+    document.getElementById('today-streak').textContent = String(streak);
+    const subEl = document.getElementById('today-streak-sub');
+    if (best <= 0) {
+      subEl.textContent = '';
+    } else if (streak >= best && streak > 0) {
+      subEl.textContent = 'Personal best';
+    } else {
+      subEl.textContent = 'Best: ' + best;
+    }
+
+    const week = computeSevenDayCalorieSummary(target);
+    const avgEl = document.getElementById('today-week-avg');
+    const weekSub = document.getElementById('today-week-sub');
+    if (week.loggedDays === 0) {
+      avgEl.textContent = '\u2014';
+      weekSub.textContent = 'No logs in the last week';
+    } else {
+      avgEl.textContent = week.avg != null ? week.avg.toLocaleString() + ' kcal' : '\u2014';
+      if (target > 0) {
+        weekSub.textContent = week.onTargetDays + ' of ' + week.loggedDays + ' logged days at or under target';
+      } else {
+        weekSub.textContent = week.loggedDays + ' day(s) with logs (avg net on those days)';
+      }
+    }
+
+    const paceCell = document.getElementById('today-pace-cell');
+    const paceVal = document.getElementById('today-pace-value');
+    const paceSub = document.getElementById('today-pace-sub');
+    if (!isToday || target <= 0) {
+      paceCell.hidden = true;
+      return;
+    }
+    const now = new Date();
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const msLeft = endOfDay - now;
+    const hoursLeft = Math.max(msLeft / 3600000, 1 / 60);
+    paceCell.hidden = false;
+    if (remaining < 0) {
+      paceVal.textContent = '\u2014';
+      paceSub.textContent = Math.abs(remaining).toLocaleString() + ' kcal over target; pacing not shown';
+      return;
+    }
+    const perHour = remaining / hoursLeft;
+    paceVal.textContent = Math.round(perHour).toLocaleString() + ' kcal/hr';
+    const hLabel = hoursLeft < 1
+      ? 'Under 1 hour left today'
+      : (Math.round(hoursLeft * 10) / 10) + ' hours left today';
+    paceSub.textContent = 'Spread remaining budget evenly \u00b7 ' + hLabel;
+  }
+
   function renderToday() {
     const today = todayStr();
     const isToday = selectedDate === today;
@@ -283,6 +401,8 @@
     const pct = target > 0 ? Math.min(100, (net / target) * 100) : 0;
     progressEl.setAttribute('width', String(pct));
     progressEl.classList.toggle('over', target > 0 && net > target);
+
+    updateTodayMotivationExtras(isToday, target, remaining);
 
     // Update Expected weight label if needed
     const expectedLabel = document.querySelector('#view-today .cc-expected-row .cc-summary-label');

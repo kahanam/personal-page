@@ -61,6 +61,23 @@
           <rect class="cc-progress-bg" x="0" y="0" width="100" height="4"/>
           <rect class="cc-progress-fill" id="today-progress" x="0" y="0" width="0" height="4"/>
         </svg>
+        <div class="cc-motivation-grid" id="today-motivation" aria-label="Streaks and weekly summary">
+          <div class="cc-motivation-cell">
+            <div class="cc-motivation-label">Log streak</div>
+            <div class="cc-motivation-value" id="today-streak">0</div>
+            <div class="cc-motivation-sub" id="today-streak-sub"></div>
+          </div>
+          <div class="cc-motivation-cell">
+            <div class="cc-motivation-label">Last 7 days</div>
+            <div class="cc-motivation-value" id="today-week-avg">&mdash;</div>
+            <div class="cc-motivation-sub" id="today-week-sub"></div>
+          </div>
+          <div class="cc-motivation-cell" id="today-pace-cell" hidden>
+            <div class="cc-motivation-label">Pace to target</div>
+            <div class="cc-motivation-value" id="today-pace-value">&mdash;</div>
+            <div class="cc-motivation-sub" id="today-pace-sub"></div>
+          </div>
+        </div>
         <div class="cc-weight-delta" id="today-weight-delta" hidden>
           <span class="cc-weight-delta-label">Today's weight change</span>
           <span class="cc-weight-delta-value" id="today-weight-delta-value"></span>
