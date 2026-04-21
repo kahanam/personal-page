@@ -272,13 +272,13 @@
     return best;
   }
 
-  /** Rolling 7 calendar days ending today: avg net on logged days, on-target count, logged-day count. */
+  /** Previous 7 full calendar days (excluding today): avg net on logged days, on-target count, logged-day count. */
   function computeSevenDayCalorieSummary(target) {
     const today = todayStr();
     let sumNet = 0;
     let loggedDays = 0;
     let onTargetDays = 0;
-    for (let i = 0; i < 7; i++) {
+    for (let i = 1; i <= 7; i++) {
       const dateStr = addDaysStr(today, -i);
       const entries = getEntriesForDate(dateStr);
       if (entries.length === 0) continue;
@@ -309,7 +309,7 @@
     const weekSub = document.getElementById('today-week-sub');
     if (week.loggedDays === 0) {
       avgEl.textContent = '\u2014';
-      weekSub.textContent = 'No food logs in the last 7 calendar days (ending today).';
+      weekSub.textContent = 'No food logs in the previous 7 calendar days (excluding today).';
     } else {
       avgEl.textContent = week.avg != null ? week.avg.toLocaleString() + ' kcal' : '\u2014';
       let sub = 'Averaged over ' + week.loggedDays + ' day' + (week.loggedDays === 1 ? '' : 's') + ' you logged.';
