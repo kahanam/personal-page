@@ -1,0 +1,92 @@
+.draft-layout {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 2rem;
+}
+
+.panels {
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  overflow: hidden;
+  min-height: 300px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  position: relative;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.8rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-label {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.players-list-content {
+  flex: 1;
+  padding: 1rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text);
+  background: transparent;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.player-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.player-item:last-child {
+  border-bottom: none;
+}
+
+.player-rank {
+  font-family: 'SF Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-right: 1rem;
+  width: 2rem;
+}
+
+.player-name {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* scrollbar styling */
+.players-list-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.players-list-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.players-list-content::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.players-list-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
