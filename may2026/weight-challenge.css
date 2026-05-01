@@ -1,0 +1,98 @@
+.table-container {
+  --week-column-width: clamp(5.25rem, 16vw, 7rem);
+  --weight-column-width: clamp(6.25rem, 18vw, 10rem);
+  --cell-padding-block: clamp(0.65rem, 2vw, 1rem);
+  --cell-padding-inline: clamp(0.5rem, 2vw, 1rem);
+
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 2rem;
+}
+
+table {
+  width: max-content;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  table-layout: fixed;
+}
+
+th, td {
+  padding: var(--cell-padding-block) var(--cell-padding-inline);
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  width: var(--weight-column-width);
+  min-width: var(--weight-column-width);
+  max-width: var(--weight-column-width);
+}
+
+th:first-child, td:first-child {
+  width: var(--week-column-width);
+  min-width: var(--week-column-width);
+  max-width: var(--week-column-width);
+  text-align: left;
+  background: color-mix(in srgb, var(--bg-card) 97%, white);
+  position: sticky;
+  left: 0;
+  z-index: 1;
+}
+
+th:last-child, td:last-child {
+  border-right: none;
+}
+
+th {
+  background: color-mix(in srgb, var(--bg-card) 95%, white);
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.weight-value {
+  color: var(--text);
+  font-family: 'Inter', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.change-sub {
+  font-size: 0.7rem;
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+
+.total-row {
+  background: color-mix(in srgb, var(--bg-card) 92%, white);
+}
+
+.total-row td {
+  padding: clamp(0.85rem, 2.5vw, 1.25rem) var(--cell-padding-inline);
+}
+
+.percent-loss {
+  color: var(--color-valid);
+}
+
+.percent-gain {
+  color: var(--color-error);
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
