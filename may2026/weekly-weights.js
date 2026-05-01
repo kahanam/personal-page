@@ -10,7 +10,7 @@
       { label: 'May 12' },
       { label: 'May 19' },
       { label: 'May 26' },
-      { label: 'May 31' }
+      { label: 'June 2' }
     ]
   };
 })();
