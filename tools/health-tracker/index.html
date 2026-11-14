@@ -35,7 +35,7 @@
         <button type="button" id="go-today" class="cc-btn cc-btn-sm" title="Go to today">Today</button>
       </div>
 
-      <div class="cc-summary-card">
+      <div class="cc-summary-card cc-summary-compact">
         <div class="cc-summary-top">
           <div>
             <div class="cc-summary-label">Calories</div>
@@ -61,52 +61,13 @@
           <rect class="cc-progress-bg" x="0" y="0" width="100" height="4"/>
           <rect class="cc-progress-fill" id="today-progress" x="0" y="0" width="0" height="4"/>
         </svg>
-        <div class="cc-motivation-grid" id="today-motivation" aria-label="Streaks and weekly summary">
-          <div class="cc-motivation-cell">
-            <div class="cc-motivation-label">Log streak</div>
-            <div class="cc-motivation-value" id="today-streak">0</div>
-            <div class="cc-motivation-sub" id="today-streak-sub"></div>
-          </div>
-          <div class="cc-motivation-cell" id="today-week-cell" title="Average daily net (food minus workouts) on days you logged food, within the last 7 calendar days ending today. Days with no logs are left out of the average, not counted as zero.">
-            <div class="cc-motivation-label">Net avg · logged days</div>
-            <div class="cc-motivation-value" id="today-week-avg">&mdash;</div>
-            <div class="cc-motivation-sub" id="today-week-sub"></div>
-          </div>
-          <div class="cc-motivation-cell" id="today-pace-cell" hidden>
-            <div class="cc-motivation-label">Pace to target</div>
-            <div class="cc-motivation-value" id="today-pace-value">&mdash;</div>
-            <div class="cc-motivation-sub" id="today-pace-sub"></div>
-          </div>
-        </div>
-        <div class="cc-weight-delta" id="today-weight-delta" hidden>
-          <span class="cc-weight-delta-label">Today's weight change</span>
-          <span class="cc-weight-delta-value" id="today-weight-delta-value"></span>
-        </div>
-        <div class="cc-expected-row" id="today-expected-row" hidden>
-          <div class="cc-expected-top">
-            <div>
-              <div class="cc-summary-label">Expected today</div>
-              <div class="cc-expected-value">
-                <span id="today-expected-weight">&mdash;</span><span class="cc-summary-unit"> lbs</span>
-              </div>
-              <div class="cc-summary-sub" id="today-expected-sub"></div>
-            </div>
-            <div class="cc-summary-right" id="today-projected-col" hidden>
-              <div class="cc-summary-label">If you hit target</div>
-              <div class="cc-expected-value">
-                <span id="today-projected-weight">&mdash;</span><span class="cc-summary-unit"> lbs</span>
-              </div>
-              <div class="cc-summary-sub" id="today-projected-sub"></div>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <form class="cc-form" id="food-form" autocomplete="off">
+      <form class="cc-form cc-food-form" id="food-form" autocomplete="off">
         <div class="cc-form-row">
-          <input type="text" id="food-name" class="cc-input cc-input-grow" placeholder="What did you eat?" required>
-          <input type="number" id="food-calories" class="cc-input cc-input-cal" placeholder="kcal" min="0" step="1" required inputmode="numeric">
-          <input type="number" id="food-qty" class="cc-input cc-input-qty" placeholder="qty" min="1" step="1" inputmode="numeric">
+          <input type="number" id="food-calories" class="cc-input cc-input-cal" placeholder="Calories" aria-label="Calories" min="0" step="1" required inputmode="numeric">
+          <input type="text" id="food-name" class="cc-input cc-input-grow" placeholder="What did you eat?" aria-label="What did you eat?">
+          <input type="number" id="food-qty" class="cc-input cc-input-qty" placeholder="qty" aria-label="Quantity" min="1" step="1" inputmode="numeric">
           <button type="submit" class="cc-btn cc-btn-primary">Add</button>
           <button type="button" id="food-fav" class="cc-btn cc-btn-fav" title="Save as frequent food" aria-label="Save as frequent food">&#9734;</button>
         </div>
@@ -117,6 +78,51 @@
       </div>
 
       <ul class="cc-entry-list" id="today-list" aria-label="Calorie entries"></ul>
+
+      <div class="cc-summary-card cc-summary-details">
+        <button type="button" class="cc-stats-toggle" id="stats-toggle" aria-expanded="false" aria-controls="stats-body">Stats &amp; Projections</button>
+        <div class="cc-stats-body" id="stats-body">
+          <div class="cc-motivation-grid" id="today-motivation" aria-label="Streaks and weekly summary">
+            <div class="cc-motivation-cell">
+              <div class="cc-motivation-label">Log streak</div>
+              <div class="cc-motivation-value" id="today-streak">0</div>
+              <div class="cc-motivation-sub" id="today-streak-sub"></div>
+            </div>
+            <div class="cc-motivation-cell" id="today-week-cell" title="Average daily net (food minus workouts) on days you logged food, within the last 7 calendar days ending today. Days with no logs are left out of the average, not counted as zero.">
+              <div class="cc-motivation-label">Net avg · logged days</div>
+              <div class="cc-motivation-value" id="today-week-avg">&mdash;</div>
+              <div class="cc-motivation-sub" id="today-week-sub"></div>
+            </div>
+            <div class="cc-motivation-cell" id="today-pace-cell" hidden>
+              <div class="cc-motivation-label">Pace to target</div>
+              <div class="cc-motivation-value" id="today-pace-value">&mdash;</div>
+              <div class="cc-motivation-sub" id="today-pace-sub"></div>
+            </div>
+          </div>
+          <div class="cc-weight-delta" id="today-weight-delta" hidden>
+            <span class="cc-weight-delta-label">Today's weight change</span>
+            <span class="cc-weight-delta-value" id="today-weight-delta-value"></span>
+          </div>
+          <div class="cc-expected-row" id="today-expected-row" hidden>
+            <div class="cc-expected-top">
+              <div>
+                <div class="cc-summary-label">Expected today</div>
+                <div class="cc-expected-value">
+                  <span id="today-expected-weight">&mdash;</span><span class="cc-summary-unit"> lbs</span>
+                </div>
+                <div class="cc-summary-sub" id="today-expected-sub"></div>
+              </div>
+              <div class="cc-summary-right" id="today-projected-col" hidden>
+                <div class="cc-summary-label">If you hit target</div>
+                <div class="cc-expected-value">
+                  <span id="today-projected-weight">&mdash;</span><span class="cc-summary-unit"> lbs</span>
+                </div>
+                <div class="cc-summary-sub" id="today-projected-sub"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Workouts -->
@@ -250,6 +256,27 @@
         <div class="cc-setting">
           <label for="setting-cal-target">Daily calorie target</label>
           <input type="number" id="setting-cal-target" class="cc-input" min="0" step="10" inputmode="numeric">
+        </div>
+        <div class="cc-setting cc-setting-check">
+          <label><input type="checkbox" id="setting-auto-daily-enabled"> Add a daily calorie item automatically</label>
+          <span class="cc-setting-hint">For food or supplements you consume every day.</span>
+        </div>
+        <div class="cc-setting">
+          <label for="setting-auto-daily-name">Daily item name</label>
+          <input type="text" id="setting-auto-daily-name" class="cc-input" placeholder="e.g. Vitamin">
+        </div>
+        <div class="cc-setting">
+          <label for="setting-auto-daily-calories">Daily item calories</label>
+          <input type="number" id="setting-auto-daily-calories" class="cc-input" min="0" step="1" inputmode="numeric">
+        </div>
+        <div class="cc-setting">
+          <label for="setting-auto-daily-quantity">Daily item quantity</label>
+          <input type="number" id="setting-auto-daily-quantity" class="cc-input" min="1" step="1" inputmode="numeric" placeholder="1">
+        </div>
+        <div class="cc-setting">
+          <label for="setting-auto-daily-start">Daily item start date</label>
+          <input type="date" id="setting-auto-daily-start" class="cc-input">
+          <span class="cc-setting-hint">The tracker creates one entry per day from this date through today.</span>
         </div>
         <div class="cc-setting">
           <label for="setting-goal-weight">Goal weight (lbs)</label>

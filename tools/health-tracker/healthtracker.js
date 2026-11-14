@@ -7,9 +7,10 @@
 
   const STORAGE_KEY = 'healthtracker.v1';
   const LEGACY_STORAGE_KEY = 'caloriecounter.v1';
+  const DEFAULT_FOOD_NAME = 'Food';
 
   const DEFAULT_STATE = {
-    calorieEntries: [], // { id, date: 'YYYY-MM-DD', name, calories, quantity }
+    calorieEntries: [], // { id, date: 'YYYY-MM-DD', name, calories, quantity, autoDailyKey? }
     weightEntries: [],  // { date: 'YYYY-MM-DD', weight }
     frequentFoods: [],  // { id, name, calories }
     workoutTemplates: [], // { id, name, exercises: [{ id, name, sets, reps, weight }] }
@@ -21,7 +22,15 @@
       normalizationDays: 7,
       projectionDays: 7,
       weeklyWorkoutGoal: 3,
-      subtractBurnedFromProjection: true
+      subtractBurnedFromProjection: true,
+      autoDailyCalorieItem: {
+        enabled: false,
+        name: '',
+        calories: 0,
+        quantity: 1,
+        startDate: '',
+        skippedDates: {}
+      }
     }
   };
 
@@ -59,8 +68,20 @@
       frequentFoods: Array.isArray(obj.frequentFoods) ? obj.frequentFoods : [],
       workoutTemplates: Array.isArray(obj.workoutTemplates) ? obj.workoutTemplates : [],
       workoutLogs: Array.isArray(obj.workoutLogs) ? obj.workoutLogs : [],
-      settings: { ...DEFAULT_STATE.settings, ...(obj.settings || {}) }
+      settings: normalizeSettings(obj.settings || {})
     };
+  }
+
+  function normalizeSettings(settings) {
+    const normalized = { ...DEFAULT_STATE.settings, ...settings };
+    normalized.autoDailyCalorieItem = {
+      ...DEFAULT_STATE.settings.autoDailyCalorieItem,
+      ...(settings.autoDailyCalorieItem || {})
+    };
+    if (!normalized.autoDailyCalorieItem.skippedDates || typeof normalized.autoDailyCalorieItem.skippedDates !== 'object') {
+      normalized.autoDailyCalorieItem.skippedDates = {};
+    }
+    return normalized;
   }
 
   function saveState() {
@@ -149,6 +170,7 @@
   }
 
   function renderCurrentView() {
+    ensureAutoDailyCalorieEntries();
     switch (currentView) {
       case 'today':    renderToday();    break;
       case 'workouts': renderWorkouts(); break;
@@ -216,6 +238,143 @@
     });
     saveState();
     renderFrequentFoods();
+  }
+
+  // ─── Automatic daily calorie item ─────────────────
+  const AUTO_DAILY_KEY = 'settings.autoDailyCalorieItem';
+
+  function getAutoDailyCalorieItem() {
+    const item = state.settings.autoDailyCalorieItem || DEFAULT_STATE.settings.autoDailyCalorieItem;
+    const name = String(item.name || '').trim();
+    const calories = Math.round(Number(item.calories) || 0);
+    const quantity = Math.max(1, Math.round(Number(item.quantity) || 1));
+    const startDate = item.startDate || todayStr();
+    if (!item.enabled || !name || calories <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return null;
+    return {
+      name: name,
+      calories: calories,
+      quantity: quantity,
+      startDate: startDate,
+      skippedDates: item.skippedDates || {}
+    };
+  }
+
+  function ensureAutoDailyCalorieEntries() {
+    const item = getAutoDailyCalorieItem();
+    if (!item) return false;
+
+    const today = todayStr();
+    if (item.startDate > today) return false;
+
+    let changed = false;
+    let dateStr = item.startDate;
+    while (dateStr <= today) {
+      if (!item.skippedDates[dateStr]) {
+        let existing = state.calorieEntries.find(function (e) {
+          return e.date === dateStr && e.autoDailyKey === AUTO_DAILY_KEY;
+        });
+        if (existing) {
+          if (existing.name !== item.name || existing.calories !== item.calories || existing.quantity !== item.quantity) {
+            existing.name = item.name;
+            existing.calories = item.calories;
+            existing.quantity = item.quantity;
+            changed = true;
+          }
+        } else {
+          state.calorieEntries.push({
+            id: crypto.randomUUID(),
+            date: dateStr,
+            name: item.name,
+            calories: item.calories,
+            quantity: item.quantity,
+            autoDailyKey: AUTO_DAILY_KEY
+          });
+          changed = true;
+        }
+      }
+      dateStr = addDaysStr(dateStr, 1);
+    }
+
+    if (changed) saveState();
+    return changed;
+  }
+
+  // ─── Swipe date navigation (touch devices) ────────
+  function initSwipeNavigation() {
+    var view = document.getElementById('view-today');
+    if (!view) return;
+    var startX = 0;
+    var startY = 0;
+    var tracking = false;
+
+    view.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1) return;
+      if (e.target.closest('input, button, select, textarea, .cc-frequent-chip, .cc-entry')) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      tracking = true;
+    }, { passive: true });
+
+    view.addEventListener('touchmove', function () {
+      // passive listener, just keep tracking
+    }, { passive: true });
+
+    view.addEventListener('touchend', function (e) {
+      if (!tracking) return;
+      tracking = false;
+      var endX = e.changedTouches[0].clientX;
+      var endY = e.changedTouches[0].clientY;
+      var dx = endX - startX;
+      var dy = endY - startY;
+
+      // Require horizontal swipe: min 60px, more horizontal than vertical
+      if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.7) return;
+
+      var direction = dx > 0 ? 'right' : 'left';
+      var today = todayStr();
+
+      if (direction === 'left') {
+        // Swipe left → next day
+        if (selectedDate >= today) return;
+        var d = fromDateStr(selectedDate);
+        d.setDate(d.getDate() + 1);
+        if (toDateStr(d) <= today) {
+          selectedDate = toDateStr(d);
+          animateSwipe('left');
+        }
+      } else {
+        // Swipe right → previous day
+        var d2 = fromDateStr(selectedDate);
+        d2.setDate(d2.getDate() - 1);
+        selectedDate = toDateStr(d2);
+        animateSwipe('right');
+      }
+    }, { passive: true });
+  }
+
+  function animateSwipe(direction) {
+    var view = document.getElementById('view-today');
+    var cls = 'cc-view-swipe-' + direction;
+    view.classList.add('cc-view-swipe', cls);
+    setTimeout(function () {
+      renderToday();
+      view.classList.remove(cls);
+      setTimeout(function () {
+        view.classList.remove('cc-view-swipe');
+      }, 250);
+    }, 120);
+  }
+
+  // ─── Collapsible stats (mobile) ───────────────────
+  function initCollapsibleStats() {
+    var toggle = document.getElementById('stats-toggle');
+    var body = document.getElementById('stats-body');
+    if (!toggle || !body) return;
+
+    toggle.addEventListener('click', function () {
+      var isExpanded = body.classList.toggle('expanded');
+      toggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+    });
   }
 
   // ─── Today view ────────────────────────────────────
@@ -354,7 +513,10 @@
     const net = total - burned;
     const remaining = target - net;
 
-    document.getElementById('today-date').textContent = formatDateLong(selectedDate);
+    const narrow = window.matchMedia('(max-width: 560px)').matches;
+    document.getElementById('today-date').textContent = narrow
+      ? formatDateMedium(selectedDate)
+      : formatDateLong(selectedDate);
     document.getElementById('go-today').hidden = isToday;
     document.getElementById('next-day').disabled = selectedDate >= today;
 
@@ -489,6 +651,10 @@
       addBtn.setAttribute('aria-label', 'Add another ' + entry.name);
       addBtn.textContent = '+';
       addBtn.addEventListener('click', function () {
+        if (entry.autoDailyKey === AUTO_DAILY_KEY) {
+          addCalorieEntry(entry.name, entry.calories, 1);
+          return;
+        }
         entry.quantity = qty + 1;
         saveState();
         renderCurrentView();
@@ -500,6 +666,11 @@
       delBtn.setAttribute('aria-label', 'Delete ' + entry.name);
       delBtn.textContent = '\u00d7';
       delBtn.addEventListener('click', function () {
+        if (entry.autoDailyKey === AUTO_DAILY_KEY) {
+          const item = state.settings.autoDailyCalorieItem;
+          item.skippedDates = item.skippedDates || {};
+          item.skippedDates[entry.date] = true;
+        }
         state.calorieEntries = state.calorieEntries.filter(function (e) { return e.id !== entry.id; });
         saveState();
         renderCurrentView();
@@ -1425,7 +1596,13 @@
 
   // ─── Settings view ─────────────────────────────────
   function renderSettings() {
+    const autoDaily = state.settings.autoDailyCalorieItem || DEFAULT_STATE.settings.autoDailyCalorieItem;
     document.getElementById('setting-cal-target').value = state.settings.dailyCalorieTarget != null ? state.settings.dailyCalorieTarget : '';
+    document.getElementById('setting-auto-daily-enabled').checked = !!autoDaily.enabled;
+    document.getElementById('setting-auto-daily-name').value = autoDaily.name || '';
+    document.getElementById('setting-auto-daily-calories').value = autoDaily.calories > 0 ? autoDaily.calories : '';
+    document.getElementById('setting-auto-daily-quantity').value = autoDaily.quantity > 0 ? autoDaily.quantity : 1;
+    document.getElementById('setting-auto-daily-start').value = autoDaily.startDate || todayStr();
     document.getElementById('setting-goal-weight').value = state.settings.goalWeight != null ? state.settings.goalWeight : '';
     document.getElementById('setting-tdee').value = state.settings.tdee != null ? state.settings.tdee : '';
     document.getElementById('setting-norm-days').value = state.settings.normalizationDays != null ? state.settings.normalizationDays : 7;
@@ -1764,11 +1941,16 @@
   }
 
   // ─── Actions ───────────────────────────────────────
+  function foodNameOrDefault(value) {
+    const name = String(value || '').trim();
+    return name || DEFAULT_FOOD_NAME;
+  }
+
   function addCalorieEntry(name, calories, quantity) {
     const qty = quantity || 1;
     const cal = Math.round(calories);
     const existing = state.calorieEntries.find(function (e) {
-      return e.date === selectedDate && e.name === name && e.calories === cal;
+      return e.date === selectedDate && e.name === name && e.calories === cal && !e.autoDailyKey;
     });
     if (existing) {
       existing.quantity = (existing.quantity || 1) + qty;
@@ -1880,26 +2062,24 @@
     const foodQty  = document.getElementById('food-qty');
     foodForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      let name = foodName.value.trim();
       const cal = Number(foodCal.value);
-      if (!name || !Number.isFinite(cal) || cal <= 0) return;
+      if (!Number.isFinite(cal) || cal <= 0) return;
       const qty = Number(foodQty.value) || 1;
-      addCalorieEntry(name, cal, qty);
+      addCalorieEntry(foodNameOrDefault(foodName.value), cal, qty);
       foodName.value = '';
       foodCal.value = '';
       foodQty.value = '';
-      foodName.focus();
+      foodCal.focus();
     });
 
     // Fav button
     document.getElementById('food-fav').addEventListener('click', function () {
-      let name = foodName.value.trim();
       const cal = Number(foodCal.value);
-      if (!name || !Number.isFinite(cal) || cal <= 0) return;
-      addFrequentFood(name, cal);
+      if (!Number.isFinite(cal) || cal <= 0) return;
+      addFrequentFood(foodNameOrDefault(foodName.value), cal);
       foodName.value = '';
       foodCal.value = '';
-      foodName.focus();
+      foodCal.focus();
     });
 
     // Weight form
@@ -1922,18 +2102,33 @@
     settingsForm.addEventListener('submit', function (e) {
       e.preventDefault();
       const cal = Number(document.getElementById('setting-cal-target').value);
+      const autoDailyEnabled = document.getElementById('setting-auto-daily-enabled').checked;
+      const autoDailyName = document.getElementById('setting-auto-daily-name').value.trim();
+      const autoDailyCalories = Number(document.getElementById('setting-auto-daily-calories').value);
+      const autoDailyQuantity = Number(document.getElementById('setting-auto-daily-quantity').value);
+      const autoDailyStart = document.getElementById('setting-auto-daily-start').value || todayStr();
       const goalW = Number(document.getElementById('setting-goal-weight').value);
       let tdee = Number(document.getElementById('setting-tdee').value);
       const normDays = Number(document.getElementById('setting-norm-days').value);
       const projectionDays = Number(document.getElementById('setting-projection-days').value);
       const workoutGoal = Number(document.getElementById('setting-workout-goal').value);
       if (Number.isFinite(cal) && cal >= 0) state.settings.dailyCalorieTarget = cal;
+      const prevAutoDaily = state.settings.autoDailyCalorieItem || DEFAULT_STATE.settings.autoDailyCalorieItem;
+      state.settings.autoDailyCalorieItem = {
+        enabled: !!autoDailyEnabled,
+        name: autoDailyName,
+        calories: Number.isFinite(autoDailyCalories) && autoDailyCalories >= 0 ? Math.round(autoDailyCalories) : 0,
+        quantity: Number.isFinite(autoDailyQuantity) && autoDailyQuantity >= 1 ? Math.round(autoDailyQuantity) : 1,
+        startDate: autoDailyStart,
+        skippedDates: prevAutoDaily.skippedDates || {}
+      };
       if (Number.isFinite(goalW) && goalW >= 0) state.settings.goalWeight = goalW;
       if (Number.isFinite(tdee) && tdee >= 0) state.settings.tdee = tdee;
       if (Number.isFinite(normDays) && normDays >= 1) state.settings.normalizationDays = normDays;
       if (Number.isFinite(projectionDays) && projectionDays >= 1) state.settings.projectionDays = projectionDays;
       if (Number.isFinite(workoutGoal) && workoutGoal >= 0) state.settings.weeklyWorkoutGoal = workoutGoal;
       state.settings.subtractBurnedFromProjection = document.getElementById('setting-subtract-burned').checked;
+      ensureAutoDailyCalorieEntries();
       saveState();
       const status = document.getElementById('settings-status');
       status.textContent = 'Saved';
@@ -1992,15 +2187,21 @@
 
     // Redraw charts on resize
     let resizeRaf = 0;
+    let wasNarrow = window.matchMedia('(max-width: 560px)').matches;
     window.addEventListener('resize', function () {
-      if (currentView !== 'weight' && currentView !== 'history') return;
+      const narrowNow = window.matchMedia('(max-width: 560px)').matches;
+      const dateFormatChanged = currentView === 'today' && narrowNow !== wasNarrow;
+      wasNarrow = narrowNow;
+      if (currentView !== 'weight' && currentView !== 'history' && !dateFormatChanged) return;
       cancelAnimationFrame(resizeRaf);
       resizeRaf = requestAnimationFrame(renderCurrentView);
     });
 
     // Initial view
+    initSwipeNavigation();
+    initCollapsibleStats();
     showView('today');
-    foodName.focus();
+    foodCal.focus();
   }
 
   if (document.readyState === 'loading') {

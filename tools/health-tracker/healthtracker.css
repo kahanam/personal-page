@@ -86,6 +86,26 @@
   margin-bottom: 1.2rem;
 }
 
+.cc-summary-compact {
+  padding: 0.85rem 1rem 0.8rem;
+  margin-bottom: 0.75rem;
+}
+
+.cc-summary-compact .cc-summary-top {
+  margin-bottom: 0.6rem;
+}
+
+.cc-summary-details .cc-motivation-grid {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* Stats toggle: hidden on desktop, visible on mobile */
+.cc-stats-toggle {
+  display: none;
+}
+
 .cc-summary-top {
   display: flex;
   justify-content: space-between;
@@ -342,8 +362,8 @@
 }
 
 .cc-input-cal {
-  flex: 0 0 100px;
-  max-width: 110px;
+  flex: 0 0 128px;
+  max-width: 140px;
 }
 
 .cc-input-qty {
@@ -1072,19 +1092,208 @@
 }
 
 @media (max-width: 560px) {
-  .cc-summary-value {
-    font-size: 1.6rem;
+  .container {
+    padding: 0.85rem 0.85rem 1.5rem;
+    /* Space for fixed bottom tab bar */
+    padding-bottom: calc(3.8rem + env(safe-area-inset-bottom, 0px));
   }
+
+  .tool-header {
+    margin-bottom: 0.7rem;
+  }
+
+  .tool-title {
+    font-size: 1.2rem;
+  }
+
+  /* ── Bottom tab bar ──────────────────────────────── */
+  .cc-tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    padding: 0.35rem 0.25rem;
+    padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
+    margin-bottom: 0;
+    flex-wrap: nowrap;
+    overflow-x: visible;
+    gap: 0;
+    justify-content: space-around;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+  }
+
+  .cc-tab {
+    flex: 1 1 0;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.7rem;
+    text-align: center;
+    border-bottom: none;
+    margin-bottom: 0;
+    border-radius: 6px;
+  }
+
+  .cc-tab.active {
+    border-bottom-color: transparent;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  /* ── Date nav ────────────────────────────────────── */
+  .cc-date-nav {
+    gap: 0.4rem;
+    margin-bottom: 0.55rem;
+  }
+
+  .cc-date-heading {
+    font-size: 0.95rem;
+  }
+
+  .cc-summary-value {
+    font-size: 1.45rem;
+  }
+
+  .cc-summary-compact {
+    padding: 0.7rem 0.8rem 0.65rem;
+    margin-bottom: 0.6rem;
+  }
+
+  /* ── Sticky food form ────────────────────────────── */
+  .cc-food-form {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--bg);
+    margin: 0 -0.85rem;
+    padding: 0.6rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+
   .cc-input-grow {
     flex: 1 1 100%;
   }
+
   .cc-input-cal {
     flex: 1 1 auto;
     max-width: none;
   }
+
+  .cc-food-form .cc-form-row {
+    flex-wrap: wrap;
+  }
+
+  .cc-food-form .cc-input-cal,
+  .cc-food-form .cc-input-grow {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .cc-food-form .cc-input-cal {
+    min-height: 48px;
+  }
+
+  .cc-food-form .cc-input-qty {
+    flex: 0 0 4.5rem;
+    max-width: 4.5rem;
+  }
+
+  .cc-food-form .cc-input-qty,
+  .cc-food-form .cc-btn {
+    min-height: 44px;
+  }
+
+  /* ── Larger tap targets ──────────────────────────── */
+  .cc-entry-add {
+    width: 36px;
+    height: 36px;
+    font-size: 1.15rem;
+  }
+
+  .cc-entry-delete {
+    min-width: 36px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .cc-entry {
+    gap: 0.55rem;
+    padding: 0.65rem 0.75rem;
+  }
+
+  /* ── Collapsible stats ───────────────────────────── */
+  .cc-summary-details {
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .cc-stats-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    background: var(--bg-card);
+    border: none;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .cc-stats-toggle::after {
+    content: '▾';
+    font-size: 0.85rem;
+    transition: transform 0.2s;
+  }
+
+  .cc-stats-toggle[aria-expanded="true"]::after {
+    transform: rotate(180deg);
+  }
+
+  .cc-stats-body {
+    display: none;
+    padding: 0 0.9rem 0.8rem;
+    background: var(--bg-card);
+  }
+
+  .cc-stats-body.expanded {
+    display: block;
+  }
+
+  .cc-summary-details .cc-motivation-grid {
+    margin-top: 0;
+  }
+
+  /* ── Responsive charts ───────────────────────────── */
+  .cc-chart-wrap canvas {
+    min-width: 0;
+    width: 100%;
+    height: 220px;
+  }
+
+  .cc-chart-wrap {
+    padding: 0.7rem 0.5rem 0.4rem;
+    overflow-x: hidden;
+  }
+
   .cc-exercise-row .cc-input-grow {
     flex: 1 1 100%;
   }
+
   .cc-exercise-labels {
     display: none;
   }
@@ -1093,4 +1302,19 @@
 /* Prevent iOS auto-zoom on focus */
 @supports (-webkit-touch-callout: none) {
   input, select, textarea, .cc-input { font-size: 16px !important; }
+}
+
+/* Swipe transition for date navigation */
+.cc-view-swipe {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.cc-view-swipe-left {
+  transform: translateX(-40px);
+  opacity: 0;
+}
+
+.cc-view-swipe-right {
+  transform: translateX(40px);
+  opacity: 0;
 }
