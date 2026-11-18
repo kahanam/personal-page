@@ -237,14 +237,57 @@
       </form>
 
       <div class="cc-chart-wrap">
-        <canvas id="weight-chart" width="680" height="280" aria-label="Weight over time chart"></canvas>
+        <div class="cc-section-header"><h2 class="cc-subheading">Weight trend</h2></div>
+        <p class="cc-trend-summary" id="weight-trend-summary" aria-live="polite"></p>
+        <canvas id="weight-chart" width="680" height="280" role="img" aria-label="Weigh-ins, seven-day average, and expected weight" aria-describedby="weight-trend-summary"></canvas>
+        <div class="cc-chart-key" id="weight-key" hidden>
+          <span class="cc-key-weigh-in">Weigh-in</span>
+          <span class="cc-key-average">7-day average</span>
+          <span class="cc-key-target" id="weight-projection-key">Expected weight</span>
+        </div>
+        <details class="cc-chart-details" id="weight-trend-details" hidden>
+          <summary>Weigh-in history</summary>
+          <div class="cc-chart-table-scroll">
+            <table aria-label="Weigh-in history in pounds">
+              <caption>Each average uses weigh-ins from that date and the six preceding days.</caption>
+              <thead><tr><th scope="col">Date</th><th scope="col">Weight (lbs)</th><th scope="col">7-day avg (lbs)</th></tr></thead>
+              <tbody id="weight-breakdown"></tbody>
+            </table>
+          </div>
+        </details>
       </div>
     </section>
 
     <!-- History -->
     <section class="cc-view" id="view-history" role="tabpanel" aria-label="History" hidden>
-      <div class="cc-chart-wrap">
-        <canvas id="calories-chart" width="680" height="280" aria-label="Daily calories chart"></canvas>
+      <div class="cc-chart-wrap cc-calorie-trend">
+        <div class="cc-section-header">
+          <h2 class="cc-subheading">Net calorie trend</h2>
+          <select class="cc-input" id="calorie-range" aria-label="Calorie chart period">
+            <option value="7">7 days</option>
+            <option value="14" selected>14 days</option>
+            <option value="30">30 days</option>
+            <option value="90">90 days</option>
+          </select>
+        </div>
+        <p class="cc-trend-summary" id="calorie-summary" aria-live="polite"></p>
+        <canvas id="calories-chart" width="680" height="280" role="img" aria-label="Daily net calories and seven-day average. Values are in the daily breakdown below."></canvas>
+        <div class="cc-chart-key" id="calorie-key">
+          <span class="cc-key-bar">Daily net</span>
+          <span class="cc-key-average">7-day average</span>
+          <span class="cc-key-target" id="calorie-target-key"></span>
+          <span class="cc-key-maintenance" id="calorie-maintenance-key"></span>
+        </div>
+        <details class="cc-chart-details">
+          <summary>Daily breakdown</summary>
+          <div class="cc-chart-table-scroll">
+            <table aria-label="Calorie chart values in kilocalories">
+              <caption>Net is food minus workout calories. The 7-day average includes only days with food logs. All values are in kcal.</caption>
+              <thead><tr><th scope="col">Date</th><th scope="col">Food</th><th scope="col">Burned</th><th scope="col">Net</th><th scope="col">7-day avg</th></tr></thead>
+              <tbody id="calorie-breakdown"></tbody>
+            </table>
+          </div>
+        </details>
       </div>
       <h3 class="cc-subheading">Past days</h3>
       <ul class="cc-history-list" id="history-list" aria-label="Past daily totals"></ul>

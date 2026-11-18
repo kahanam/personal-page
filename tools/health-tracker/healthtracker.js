@@ -382,8 +382,12 @@
     return state.calorieEntries.filter(function (e) { return e.date === dateStr; });
   }
 
+  function totalFoodCalories(entries) {
+    return entries.reduce(function (sum, e) { return sum + e.calories * (e.quantity || 1); }, 0);
+  }
+
   function getTotalForDate(dateStr) {
-    return getEntriesForDate(dateStr).reduce(function (sum, e) { return sum + e.calories * (e.quantity || 1); }, 0);
+    return totalFoodCalories(getEntriesForDate(dateStr));
   }
 
   function getBurnedForDate(dateStr) {
@@ -834,6 +838,51 @@
     return points;
   }
 
+  function buildWeightTrend(sorted) {
+    let start = 0;
+    let sum = 0;
+    return sorted.map((entry, index) => {
+      const cutoff = addDaysStr(entry.date, -6);
+      while (sorted[start].date < cutoff) {
+        sum -= sorted[start].weight;
+        start++;
+      }
+      sum += entry.weight;
+      const count = index - start + 1;
+      return { ...entry, average: sum / count, count };
+    });
+  }
+
+  function renderWeightTrend(sorted, goal, projected) {
+    const trend = buildWeightTrend(sorted);
+    const latest = trend[trend.length - 1];
+    const summary = document.getElementById('weight-trend-summary');
+    summary.textContent = latest
+      ? latest.average.toFixed(1) + ' lbs · 7-day average through ' + formatDateShort(latest.date) +
+        ' · ' + latest.count + (latest.count === 1 ? ' weigh-in' : ' weigh-ins')
+      : '';
+    document.getElementById('weight-key').hidden = !latest;
+    document.getElementById('weight-projection-key').hidden = projected.length < 2;
+    document.getElementById('weight-trend-details').hidden = !latest;
+
+    const rows = document.createDocumentFragment();
+    for (let i = trend.length - 1; i >= 0; i--) {
+      const entry = trend[i];
+      const row = document.createElement('tr');
+      const dateCell = document.createElement('th');
+      dateCell.scope = 'row';
+      dateCell.textContent = fromDateStr(entry.date).toLocaleDateString(undefined, {
+        month: 'short', day: 'numeric', year: 'numeric'
+      });
+      row.appendChild(dateCell);
+      row.insertCell().textContent = entry.weight.toFixed(1);
+      row.insertCell().textContent = entry.average.toFixed(1);
+      rows.appendChild(row);
+    }
+    document.getElementById('weight-breakdown').replaceChildren(rows);
+    drawWeightChart(trend, goal, projected);
+  }
+
   function renderWeight() {
     const sorted = state.weightEntries.slice().sort(function (a, b) { return a.date.localeCompare(b.date); });
     const current = sorted[sorted.length - 1];
@@ -904,22 +953,70 @@
     if (!dateInput.value) dateInput.value = todayStr();
 
     const projected = buildProjectedWeightSeries();
-    drawWeightChart(sorted, hasGoal ? goal : null, projected);
+    renderWeightTrend(sorted, hasGoal ? goal : null, projected);
   }
 
   // ─── History view ──────────────────────────────────
-  function renderHistory() {
+  function renderCalorieTrend() {
+    const period = Number(document.getElementById('calorie-range').value);
+    const today = todayStr();
     const days = [];
-    const totals = [];
-    const today = new Date();
-    for (let i = 13; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
-      const str = toDateStr(d);
-      days.push(str);
-      totals.push(Math.max(0, getTotalForDate(str) - getBurnedForDate(str)));
+    const windowNet = [];
+    // Include the preceding six days so changing the range preserves overlapping averages.
+    for (let offset = period + 5; offset >= 0; offset--) {
+      const date = addDaysStr(today, -offset);
+      const entries = getEntriesForDate(date);
+      const food = entries.length ? totalFoodCalories(entries) : null;
+      const burned = getBurnedForDate(date);
+      const net = food === null ? null : food - burned;
+      windowNet.push(net);
+      if (windowNet.length > 7) windowNet.shift();
+      if (offset >= period) continue;
+      const logged = windowNet.filter(value => value !== null);
+      const average = logged.length ? Math.round(logged.reduce((sum, value) => sum + value, 0) / logged.length) : null;
+      days.push({ date, food, burned, net, average });
     }
-    drawCaloriesChart(days, totals, Number(state.settings.dailyCalorieTarget) || 0);
+
+    const logged = days.filter(day => day.net !== null);
+    const summary = document.getElementById('calorie-summary');
+    if (logged.length) {
+      const mean = Math.round(logged.reduce((sum, day) => sum + day.net, 0) / logged.length);
+      summary.textContent = mean.toLocaleString() + ' kcal/day on average · Food logged on ' + logged.length + ' of ' + period + ' days';
+    } else {
+      summary.textContent = 'No food logged in the last ' + period + ' days.';
+    }
+
+    const target = Number(state.settings.dailyCalorieTarget) || 0;
+    const maintenance = Number(state.settings.tdee) || 0;
+    const targetKey = document.getElementById('calorie-target-key');
+    const maintenanceKey = document.getElementById('calorie-maintenance-key');
+    targetKey.hidden = target <= 0;
+    targetKey.textContent = (target === maintenance ? 'Target & maintenance ' : 'Target ') + target.toLocaleString();
+    maintenanceKey.hidden = maintenance <= 0 || maintenance === target;
+    maintenanceKey.textContent = 'Maintenance ' + maintenance.toLocaleString();
+    const hasTrend = days.some(day => day.average !== null);
+    document.getElementById('calorie-key').hidden = !hasTrend;
+    drawCaloriesChart(days, target, maintenance, hasTrend);
+
+    const rows = document.createDocumentFragment();
+    for (const day of days.slice().reverse()) {
+      const row = document.createElement('tr');
+      const dateCell = document.createElement('th');
+      dateCell.scope = 'row';
+      dateCell.textContent = formatDateShort(day.date);
+      row.appendChild(dateCell);
+      for (const value of [day.food, day.burned, day.net, day.average]) {
+        const cell = document.createElement('td');
+        cell.textContent = value === null ? '—' : value.toLocaleString();
+        row.appendChild(cell);
+      }
+      rows.appendChild(row);
+    }
+    document.getElementById('calorie-breakdown').replaceChildren(rows);
+  }
+
+  function renderHistory() {
+    renderCalorieTrend();
 
     const dateSet = new Set(state.calorieEntries.map(function (e) { return e.date; }));
     const dates = Array.from(dateSet).sort(function (a, b) { return b.localeCompare(a); });
@@ -1736,23 +1833,20 @@
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillStyle = colors.textDim;
-    const labelDates = [];
-    if (entries.length === 1) {
-      labelDates.push(entries[0].date);
-    } else {
-      labelDates.push(entries[0].date);
-      if (entries.length >= 3) labelDates.push(entries[Math.floor(entries.length / 2)].date);
-      labelDates.push(entries[entries.length - 1].date);
+    const ticks = [first];
+    const middle = fromDateStr(toDateStr(new Date(first + xRange / 2))).getTime();
+    if (middle > first && middle < last && xFor(middle) - xFor(first) > 60 && xFor(last) - xFor(middle) > 60) {
+      ticks.push(middle);
     }
-    labelDates.forEach(function (d) {
-      const x = xFor(fromDateStr(d).getTime());
-      ctx.fillText(formatDateShort(d), x, pad.top + plotH + 8);
+    if (last > first) ticks.push(last);
+    ticks.forEach(function (ts) {
+      ctx.fillText(formatDateShort(toDateStr(new Date(ts))), xFor(ts), pad.top + plotH + 8);
     });
 
     if (goal != null) {
       ctx.save();
-      ctx.setLineDash([5, 5]);
-      ctx.strokeStyle = colors.accent2;
+      ctx.setLineDash([2, 4]);
+      ctx.strokeStyle = colors.textDim;
       ctx.lineWidth = 1.5;
       const gy = yFor(goal);
       ctx.beginPath();
@@ -1761,62 +1855,19 @@
       ctx.stroke();
       ctx.restore();
 
-      ctx.fillStyle = colors.accent2;
+      ctx.fillStyle = colors.textDim;
       ctx.textAlign = 'right';
       ctx.textBaseline = 'bottom';
       ctx.fillText('goal ' + goal, w - pad.right - 2, gy - 3);
     }
 
-    ctx.save();
-    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
-    grad.addColorStop(0, colors.accent + '55');
-    grad.addColorStop(1, colors.accent + '00');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    entries.forEach(function (e, i) {
-      const x = xFor(fromDateStr(e.date).getTime());
-      const y2 = yFor(e.weight);
-      if (i === 0) ctx.moveTo(x, y2);
-      else ctx.lineTo(x, y2);
-    });
-    const lastX = xFor(fromDateStr(entries[entries.length - 1].date).getTime());
-    const firstX = xFor(fromDateStr(entries[0].date).getTime());
-    ctx.lineTo(lastX, pad.top + plotH);
-    ctx.lineTo(firstX, pad.top + plotH);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-
-    ctx.strokeStyle = colors.accent;
-    ctx.lineWidth = 2;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    entries.forEach(function (e, i) {
-      const x = xFor(fromDateStr(e.date).getTime());
-      const y2 = yFor(e.weight);
-      if (i === 0) ctx.moveTo(x, y2);
-      else ctx.lineTo(x, y2);
-    });
-    ctx.stroke();
-
-    ctx.fillStyle = colors.accent;
-    entries.forEach(function (e) {
-      const x = xFor(fromDateStr(e.date).getTime());
-      const y2 = yFor(e.weight);
-      ctx.beginPath();
-      ctx.arc(x, y2, 3, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
     if (projected && projected.length >= 2) {
       ctx.save();
       ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = colors.accent2;
+      ctx.strokeStyle = colors.text;
       ctx.lineWidth = 1.5;
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
-      ctx.globalAlpha = 0.7;
       ctx.beginPath();
       projected.forEach(function (p, i) {
         const x = xFor(fromDateStr(p.date).getTime());
@@ -1827,117 +1878,100 @@
       ctx.stroke();
       ctx.restore();
     }
+
+    ctx.strokeStyle = colors.accent2;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    entries.forEach(function (entry) {
+      const x = xFor(fromDateStr(entry.date).getTime());
+      const y = yFor(entry.average);
+      // A one-reading window starts a new segment after a gap.
+      if (entry.count === 1) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    entries.forEach(function (entry) {
+      const x = xFor(fromDateStr(entry.date).getTime());
+      if (entry.count === 1) {
+        ctx.beginPath();
+        ctx.arc(x, yFor(entry.average), 4.5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = colors.accent;
+      ctx.beginPath();
+      ctx.arc(x, yFor(entry.weight), 2.75, 0, Math.PI * 2);
+      ctx.fill();
+    });
   }
 
-  function drawCaloriesChart(days, totals, target) {
+  function drawCaloriesChart(days, target, maintenance, hasTrend) {
     const canvas = document.getElementById('calories-chart');
-    const prepared = prepareCanvas(canvas);
-    const ctx = prepared.ctx, w = prepared.w, h = prepared.h;
-    ctx.clearRect(0, 0, w, h);
-
+    const { ctx, w, h } = prepareCanvas(canvas);
     const colors = getThemeColors();
-    const padChart = { top: 12, right: 24, bottom: 42, left: 52 };
-    const plotW = w - padChart.left - padChart.right;
-    const plotH = h - padChart.top - padChart.bottom;
-
-    const tdee = Number(state.settings.tdee) || 0;
-    const hasData = totals.some(function (t) { return t > 0; });
-    if (!hasData && !(target > 0) && !(tdee > 0)) {
-      drawNoData(ctx, w, h, colors, 'No calorie entries yet');
+    if (!hasTrend) {
+      drawNoData(ctx, w, h, colors, 'No calorie trend for this period');
       return;
     }
 
-    let maxV = Math.max.apply(null, totals.concat([target || 0, tdee || 0, 10]));
-    const scale = niceScale(0, maxV * 1.04, 5);
+    const values = days.flatMap(day => [day.net, day.average]).filter(value => value !== null);
+    const scale = niceScale(Math.min(0, ...values), Math.max(1, target, maintenance, ...values), 5);
+    const left = 50, right = w - 25, top = 14, bottom = h - 32;
+    const slot = (right - left) / days.length;
+    const barWidth = Math.min(36, slot * 0.7);
+    const xFor = index => left + (index + 0.5) * slot;
+    const yFor = value => bottom - (value - scale.min) / (scale.max - scale.min) * (bottom - top);
+    function horizontalLine(value, color, dash) {
+      ctx.strokeStyle = color;
+      ctx.setLineDash(dash);
+      ctx.beginPath();
+      ctx.moveTo(left, yFor(value));
+      ctx.lineTo(right, yFor(value));
+      ctx.stroke();
+    }
 
     ctx.font = '11px Inter, sans-serif';
-    ctx.lineWidth = 1;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-
-    const yFor = function (v) { return padChart.top + plotH - ((v - scale.min) / (scale.max - scale.min)) * plotH; };
-
-    for (let v = scale.min; v <= scale.max + 0.0001; v += scale.step) {
-      const y = yFor(v);
-      ctx.strokeStyle = colors.border;
-      ctx.beginPath();
-      ctx.moveTo(padChart.left, y);
-      ctx.lineTo(w - padChart.right, y);
-      ctx.stroke();
-      ctx.fillStyle = colors.textDim;
-      ctx.fillText(v.toLocaleString(), padChart.left - 8, y);
+    ctx.fillStyle = colors.textDim;
+    for (let tick = scale.min; tick <= scale.max + 0.0001; tick += scale.step) {
+      horizontalLine(tick, colors.border, []);
+      ctx.fillText(tick.toLocaleString(), left - 6, yFor(tick));
     }
 
-    const n = days.length;
-    const slot = plotW / n;
-    const barW = Math.max(4, slot * 0.68);
-    const todayVal = todayStr();
-    for (let i = 0; i < n; i++) {
-      const x = padChart.left + i * slot + (slot - barW) / 2;
-      const val = totals[i];
-      const yb = yFor(val);
-      const barH = Math.max(0, padChart.top + plotH - yb);
-      const isOver = target > 0 && val > target;
-      const isToday = days[i] === todayVal;
-      ctx.fillStyle = isOver ? colors.accent2 : colors.accent;
-      ctx.globalAlpha = val === 0 ? 0.2 : (isToday ? 1 : 0.8);
-      const r = Math.min(3, barW / 2, barH);
-      ctx.beginPath();
-      ctx.moveTo(x, yb + r);
-      ctx.quadraticCurveTo(x, yb, x + r, yb);
-      ctx.lineTo(x + barW - r, yb);
-      ctx.quadraticCurveTo(x + barW, yb, x + barW, yb + r);
-      ctx.lineTo(x + barW, padChart.top + plotH);
-      ctx.lineTo(x, padChart.top + plotH);
-      ctx.closePath();
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    }
+    ctx.fillStyle = colors.accent;
+    days.forEach((day, index) => {
+      if (day.net === null) return;
+      const y = yFor(day.net);
+      ctx.fillRect(xFor(index) - barWidth / 2, Math.min(y, yFor(0)), barWidth, Math.max(2, Math.abs(y - yFor(0))));
+    });
 
-    if (target > 0) {
-      ctx.save();
-      ctx.setLineDash([5, 5]);
-      ctx.strokeStyle = colors.accent2;
-      ctx.lineWidth = 1.5;
-      const ty = yFor(target);
-      ctx.beginPath();
-      ctx.moveTo(padChart.left, ty);
-      ctx.lineTo(w - padChart.right, ty);
-      ctx.stroke();
-      ctx.restore();
+    if (target > 0) horizontalLine(target, colors.text, [5, 4]);
+    if (maintenance > 0 && maintenance !== target) horizontalLine(maintenance, colors.textDim, [2, 3]);
 
-      ctx.fillStyle = colors.accent2;
-      ctx.textAlign = 'right';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText('target ' + target.toLocaleString(), w - padChart.right - 2, yFor(target) - 3);
-    }
-
-    if (tdee > 0) {
-      ctx.save();
-      ctx.strokeStyle = colors.textDim;
-      ctx.globalAlpha = 0.8;
-      ctx.lineWidth = 1.5;
-      const ty = yFor(tdee);
-      ctx.beginPath();
-      ctx.moveTo(padChart.left, ty);
-      ctx.lineTo(w - padChart.right, ty);
-      ctx.stroke();
-      ctx.restore();
-
-      ctx.fillStyle = colors.text;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText('maintenance ' + tdee.toLocaleString(), padChart.left + 2, ty - 3);
-    }
+    ctx.setLineDash([]);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = colors.accent2;
+    ctx.fillStyle = colors.accent2;
+    ctx.beginPath();
+    days.forEach((day, index) => {
+      if (day.average === null) return;
+      const x = xFor(index), y = yFor(day.average);
+      if (index === 0 || days[index - 1].average === null) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+      if (days[index - 1]?.average == null && days[index + 1]?.average == null) {
+        ctx.fillRect(x - 2, y - 2, 4, 4);
+      }
+    });
+    ctx.stroke();
 
     ctx.fillStyle = colors.textDim;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    const labelIndices = n >= 3 ? [0, Math.floor(n / 2), n - 1] : Array.from({ length: n }, function (_, idx) { return idx; });
-    labelIndices.forEach(function (idx) {
-      const x = padChart.left + idx * slot + slot / 2;
-      ctx.fillText(formatDateShort(days[idx]), x, padChart.top + plotH + 10);
-    });
+    for (const index of [0, Math.floor(days.length / 2), days.length - 1]) {
+      ctx.fillText(formatDateShort(days[index].date), xFor(index), bottom + 9);
+    }
   }
 
   // ─── Actions ───────────────────────────────────────
@@ -2184,6 +2218,8 @@
 
     // Workout: delete template
     document.getElementById('delete-template-btn').addEventListener('click', deleteTemplate);
+
+    document.getElementById('calorie-range').addEventListener('change', renderCalorieTrend);
 
     // Redraw charts on resize
     let resizeRaf = 0;

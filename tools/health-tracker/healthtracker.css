@@ -646,6 +646,82 @@
 }
 
 /* ─── History ──────────────────────────────────────── */
+.cc-calorie-trend .cc-input {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.cc-trend-summary, .cc-chart-key, .cc-chart-details {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.cc-trend-summary {
+  margin: 0 0 0.25rem;
+}
+
+.cc-chart-key:not([hidden]) {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+}
+
+.cc-chart-key span::before {
+  content: '';
+  display: inline-block;
+  width: 1rem;
+  vertical-align: middle;
+  margin-right: 0.35rem;
+}
+
+.cc-key-bar::before { height: 0.5rem; background: var(--accent); }
+.cc-chart-key .cc-key-weigh-in::before {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.cc-key-average::before { border-top: 2px solid var(--accent2); }
+.cc-key-target::before { border-top: 2px dashed var(--text); }
+.cc-key-maintenance::before { border-top: 2px dotted var(--text-dim); }
+
+.cc-chart-details {
+  margin-top: 0.85rem;
+  border-top: 1px solid var(--border);
+}
+
+.cc-chart-details summary {
+  padding: 0.7rem 0 0.25rem;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.cc-chart-table-scroll {
+  max-height: 18rem;
+  overflow: auto;
+}
+
+.cc-chart-details table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.cc-chart-details caption {
+  text-align: left;
+  padding: 0.4rem 0;
+}
+
+.cc-chart-details th, .cc-chart-details td {
+  padding: 0.4rem;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+
+.cc-chart-details th:first-child { text-align: left; }
+.cc-chart-details thead th { position: sticky; top: 0; background: var(--bg-card); }
+
 .cc-subheading {
   font-family: 'Sora', sans-serif;
   font-size: 0.95rem;
