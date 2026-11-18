@@ -1095,7 +1095,7 @@
   .container {
     padding: 0.85rem 0.85rem 1.5rem;
     /* Space for fixed bottom tab bar */
-    padding-bottom: calc(3.8rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
   }
 
   .tool-header {
@@ -1116,8 +1116,8 @@
     background: var(--bg);
     border-top: 1px solid var(--border);
     border-bottom: none;
-    padding: 0.35rem 0.25rem;
-    padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.45rem 0.25rem;
+    padding-bottom: calc(0.45rem + env(safe-area-inset-bottom, 0px));
     margin-bottom: 0;
     flex-wrap: nowrap;
     overflow-x: visible;
@@ -1130,8 +1130,9 @@
 
   .cc-tab {
     flex: 1 1 0;
-    padding: 0.5rem 0.25rem;
-    font-size: 0.7rem;
+    min-height: 44px;
+    padding: 0.55rem 0.25rem;
+    font-size: 0.75rem;
     text-align: center;
     border-bottom: none;
     margin-bottom: 0;
