@@ -7,7 +7,6 @@
 
   const STORAGE_KEY = 'healthtracker.v1';
   const LEGACY_STORAGE_KEY = 'caloriecounter.v1';
-  const DEFAULT_FOOD_NAME = 'Food';
 
   const DEFAULT_STATE = {
     calorieEntries: [], // { id, date: 'YYYY-MM-DD', name, calories, quantity, autoDailyKey? }
@@ -1977,7 +1976,12 @@
   // ─── Actions ───────────────────────────────────────
   function foodNameOrDefault(value) {
     const name = String(value || '').trim();
-    return name || DEFAULT_FOOD_NAME;
+    if (name) return name;
+
+    const hour = new Date().getHours();
+    if (hour < 11) return 'Breakfast';
+    if (hour < 16) return 'Lunch';
+    return 'Dinner';
   }
 
   function addCalorieEntry(name, calories, quantity) {
